@@ -1,0 +1,22 @@
+node_modules
+dist
+.turbo
+.cache
+.DS_Store
+*.log
+coverage
+
+# secrets / credentials — never commit
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
