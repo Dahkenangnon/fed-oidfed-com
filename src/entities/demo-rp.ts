@@ -25,7 +25,12 @@ import crypto from "node:crypto";
 import type { EntityId, HttpClient, JWK, TrustAnchorSet } from "@oidfed/core";
 import { entityId as toEntityId } from "@oidfed/core";
 import { type LeafEntity, discoverEntity } from "@oidfed/leaf";
-import { automaticRegistration, createClientAssertion, explicitRegistration } from "@oidfed/oidc";
+import {
+	type RequestDelivery,
+	automaticRegistration,
+	createClientAssertion,
+	explicitRegistration,
+} from "@oidfed/oidc";
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
@@ -53,6 +58,13 @@ interface DemoRpConfig {
 	 * least one of the Trust Anchors in the chosen subset.
 	 */
 	authorityHints: ReadonlyArray<string>;
+	/**
+	 * How the signed Request Object reaches the OP authorization endpoint
+	 * during automatic registration. Defaults to "form_post" — the safe
+	 * choice for chain-bearing Request Objects. Ignored when
+	 * registrationMode === "explicit".
+	 */
+	requestDelivery?: RequestDelivery;
 	httpClient?: HttpClient;
 }
 
@@ -73,6 +85,7 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 		metadata,
 		registrationMode,
 		authorityHints,
+		requestDelivery = "form_post",
 		httpClient = fetch,
 	} = config;
 	const rpAuthorityHints = authorityHints.map((h) => toEntityId(h));
@@ -83,6 +96,10 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 	// Per-flow cache keyed by state — survives the redirect to the OP and back.
 	// Cleared on use or TTL expiry. Demo-grade single-process storage.
 	const flowCache = new Map<string, FlowState>();
+	// Per-process cache of Request Object JWTs hosted under /request-object/:id
+	// for the by-reference delivery mode. Entries TTL out after 60 seconds.
+	const requestObjectStore = new Map<string, { jwt: string; expiresAt: number }>();
+	const REQUEST_OBJECT_TTL_MS = 60_000;
 
 	app.use(
 		"*",
@@ -119,11 +136,26 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 				return jsonError(c, "missing_rp_metadata", "RP has no openid_relying_party metadata.");
 			}
 
-			let authorizationUrl: string;
+			// Discriminated result of the login dispatch: either a redirect URL,
+			// or a form-post HTML page rendered locally.
+			type Dispatch =
+				| { kind: "redirect"; url: string }
+				| { kind: "form_post"; action: string; fields: Record<string, string> };
+
+			let dispatch: Dispatch;
 			let cachedClientId: string;
 			let cachedClientSecret: string | undefined;
 
 			if (registrationMode === "automatic") {
+				// For request_uri delivery, allocate a hosted slot up-front so the URL
+				// can be passed into the lib. The signed JWT will be cached after sign.
+				let hostedRequestUri: string | undefined;
+				let hostedRequestId: string | undefined;
+				if (requestDelivery === "request_uri") {
+					hostedRequestId = crypto.randomUUID();
+					hostedRequestUri = `${entityId}/request-object/${hostedRequestId}`;
+				}
+
 				const result = await automaticRegistration(
 					discovery,
 					{
@@ -131,6 +163,8 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 						signingKeys: [signingKey as Record<string, unknown>],
 						authorityHints: rpAuthorityHints,
 						metadata: { openid_relying_party: rpMeta },
+						requestDelivery,
+						...(hostedRequestUri !== undefined ? { requestUri: hostedRequestUri } : {}),
 					},
 					{
 						client_id: entityId,
@@ -143,8 +177,31 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 					trustAnchors,
 					{ httpClient },
 				);
-				authorizationUrl = result.authorizationUrl;
 				cachedClientId = entityId; // client_id equals the RP Entity Identifier for automatic registration
+
+				switch (result.delivery) {
+					case "query":
+					case "par":
+						dispatch = { kind: "redirect", url: result.authorizationUrl };
+						break;
+					case "request_uri":
+						if (hostedRequestId !== undefined) {
+							pruneRequestObjectStore(requestObjectStore);
+							requestObjectStore.set(hostedRequestId, {
+								jwt: result.requestObjectJwt,
+								expiresAt: Date.now() + REQUEST_OBJECT_TTL_MS,
+							});
+						}
+						dispatch = { kind: "redirect", url: result.authorizationUrl };
+						break;
+					case "form_post":
+						dispatch = {
+							kind: "form_post",
+							action: result.authorizationEndpoint,
+							fields: result.formParams,
+						};
+						break;
+				}
 			} else {
 				const result = await explicitRegistration(
 					discovery,
@@ -173,7 +230,7 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 				url.searchParams.set("scope", "openid profile email");
 				url.searchParams.set("state", state);
 				url.searchParams.set("nonce", nonce);
-				authorizationUrl = url.toString();
+				dispatch = { kind: "redirect", url: url.toString() };
 			}
 
 			pruneFlowCache(flowCache);
@@ -203,7 +260,10 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 				maxAge: COOKIE_MAX_AGE,
 			});
 
-			return c.redirect(authorizationUrl, 302);
+			if (dispatch.kind === "form_post") {
+				return c.html(renderAutoSubmitForm(dispatch.action, dispatch.fields), 200);
+			}
+			return c.redirect(dispatch.url, 302);
 		} catch (err) {
 			return jsonError(
 				c,
@@ -410,6 +470,33 @@ ${
 		);
 	});
 
+	// ── Hosted Request Object (request_uri delivery) ─────────────────────────
+	app.get("/request-object/:id", (c) => {
+		const id = c.req.param("id");
+		pruneRequestObjectStore(requestObjectStore);
+		const entry = requestObjectStore.get(id);
+		if (!entry || entry.expiresAt < Date.now()) {
+			return c.json(
+				{
+					error: "not_found",
+					error_description: "Request Object not found or expired.",
+					entity_id: entityId,
+					entity_type: "demo-rp",
+				},
+				404,
+			);
+		}
+		// Single-use: evict immediately so the JWT cannot be replayed.
+		requestObjectStore.delete(id);
+		return new Response(entry.jwt, {
+			status: 200,
+			headers: {
+				"content-type": "application/oauth-authz-req+jwt",
+				"cache-control": "no-store",
+			},
+		});
+	});
+
 	// ── Unified JSON envelope ────────────────────────────────────────────────
 	app.notFound((c) =>
 		c.json(
@@ -507,6 +594,13 @@ export async function verifyOpSignedIdToken(
 	}
 }
 
+function pruneRequestObjectStore(cache: Map<string, { jwt: string; expiresAt: number }>): void {
+	const now = Date.now();
+	for (const [k, v] of cache) {
+		if (v.expiresAt < now) cache.delete(k);
+	}
+}
+
 function pruneFlowCache(cache: Map<string, FlowState>): void {
 	const now = Date.now();
 	for (const [k, v] of cache) {
@@ -563,6 +657,22 @@ function renderLandingPage(opts: {
 <p>OP: <code>${htmlEscape(opts.opEntityId)}</code></p>
 <p><a href="/start-login">Sign in via OP →</a></p>
 <p><small>Demo RP. <a href="/.well-known/openid-federation">Entity Configuration</a></small></p>
+</body></html>`;
+}
+
+function renderAutoSubmitForm(action: string, fields: Record<string, string>): string {
+	const inputs = Object.entries(fields)
+		.map(
+			([name, value]) =>
+				`<input type="hidden" name="${htmlEscape(name)}" value="${htmlEscape(value)}">`,
+		)
+		.join("");
+	return `<!doctype html><html lang=en><head><meta charset=utf-8><title>Continue</title></head>
+<body onload="document.forms[0].submit()">
+<form method="post" action="${htmlEscape(action)}">
+${inputs}
+<noscript><button type="submit">Continue to sign-in</button></noscript>
+</form>
 </body></html>`;
 }
 
