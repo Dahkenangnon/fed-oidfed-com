@@ -91,10 +91,17 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 		scopes: ["openid", "profile", "email"],
 		responseTypes: ["code"],
 		clientAuthMethods: ["private_key_jwt", "none"],
+		// Required for form_post delivery: lets POST /auth carry the Request Object body.
+		enableHttpPostMethods: true,
 		// Cookie signing key derived from the OP's signing key so in-flight sessions,
 		// authorization codes, grants, and CSRF cookies survive a process restart.
-		// Same pattern as demo-rp.ts:deriveCookieSecret.
-		cookies: { keys: [deriveCookieSecret(signingKey).toString("base64")] },
+		// Same pattern as demo-rp.ts:deriveCookieSecret. cookies.long.sameSite must be
+		// "none" when enableHttpPostMethods is true — cross-site POST from the RP's
+		// auto-submit form_post page would otherwise drop session cookies.
+		cookies: {
+			keys: [deriveCookieSecret(signingKey).toString("base64")],
+			long: { sameSite: "none", secure: true, httpOnly: true },
+		},
 		// Explicit TTLs across every artifact type — silences node-oidc-provider's
 		// default-TTL NOTICE warnings and pins values across upstream versions.
 		ttl: {
@@ -126,6 +133,7 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 		features: {
 			registration: { enabled: false }, // federation handles its own
 			requestObjects: { enabled: true }, // Request Objects are the automatic-registration carrier
+			pushedAuthorizationRequests: { enabled: true }, // PAR delivery mode for automatic registration
 			devInteractions: { enabled: false }, // we serve our own UI below
 			rpMetadataChoices: { enabled: true }, // OIDC RP Metadata Choices — narrows array-valued client metadata at request time
 			rpInitiatedLogout: { enabled: true },
@@ -347,54 +355,157 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 		}
 	});
 
+	// Federation-aware pre-registration: validates the Request Object's trust
+	// chain and signature, then upserts the resulting RP into the OIDC client
+	// store with private_key_jwt auth. Returns ok=false with an OIDC-style
+	// error envelope when federation validation fails — callers respond to
+	// the user-agent with that JSON instead of redirecting.
+	async function preregister(
+		requestJwt: string,
+	): Promise<{ ok: true } | { ok: false; errorCode: string; errorDescription: string }> {
+		const result = await processAutomaticRegistration(requestJwt, trustAnchors, {
+			opEntityId: entityId as EntityId,
+			jtiStore,
+			httpClient,
+		});
+		if (!result.ok) {
+			return {
+				ok: false,
+				errorCode: result.error.code,
+				errorDescription: result.error.description,
+			};
+		}
+		const rpMeta = result.value.resolvedRpMetadata as Record<string, unknown>;
+		// jwks fallback: prefer openid_relying_party.jwks, then fall back to the
+		// federation EC's top-level jwks (the leaf statement in the resolved chain).
+		const leafStmt = result.value.trustChain.statements[0];
+		const fedJwks = leafStmt?.payload.jwks as { keys: JWK[] } | undefined;
+		const rpJwks = (rpMeta.jwks as { keys: JWK[] } | undefined) ?? fedJwks;
+		registerClient(clientStore, {
+			client_id: result.value.rpEntityId,
+			redirect_uris: (rpMeta.redirect_uris as string[]) || [],
+			response_types: (rpMeta.response_types as string[]) || ["code"],
+			grant_types: (rpMeta.grant_types as string[]) || ["authorization_code"],
+			// Automatic registration uses asymmetric crypto only; never a client_secret.
+			token_endpoint_auth_method: "private_key_jwt",
+			token_endpoint_auth_signing_alg:
+				(rpMeta.token_endpoint_auth_signing_alg as string | undefined) ?? DEFAULT_SIGNING_ALG,
+			id_token_signed_response_alg:
+				(rpMeta.id_token_signed_response_alg as string | undefined) ?? DEFAULT_SIGNING_ALG,
+			request_object_signing_alg:
+				(rpMeta.request_object_signing_alg as string | undefined) ?? DEFAULT_SIGNING_ALG,
+			jwks: rpJwks,
+			application_type: "web",
+		});
+		return { ok: true };
+	}
+
+	function sendOidcJsonError(res: express.Response, code: string, description: string): void {
+		res
+			.status(400)
+			.type("application/json")
+			.send(
+				JSON.stringify({
+					error: code,
+					error_description: description,
+					entity_id: entityId,
+					entity_type: "openid-provider",
+				}),
+			);
+	}
+
 	// ── /auth interception for automatic federation registration ─────────────
+	// Accepts the Request Object via three carriers:
+	//   ?request=<JWT>             — query delivery
+	//   ?request_uri=https://…     — by-reference (lib fetches via httpClient,
+	//                                then rewrites the URL to ?request=<JWT>
+	//                                because node-oidc-provider only accepts
+	//                                urn:-style request_uri values)
+	//   ?request_uri=urn:…         — PAR (resolved internally by node-oidc-provider)
 	app.get("/auth", async (req, res, next) => {
 		const requestJwt = req.query.request as string | undefined;
-		if (requestJwt) {
-			const result = await processAutomaticRegistration(requestJwt, trustAnchors, {
-				opEntityId: entityId as EntityId,
-				jtiStore,
-				httpClient,
-			});
-			if (!result.ok) {
+		const requestUri = req.query.request_uri as string | undefined;
+
+		let inboundJwt: string | undefined;
+		let rewroteRequestUri = false;
+		if (typeof requestJwt === "string") {
+			inboundJwt = requestJwt;
+		} else if (typeof requestUri === "string" && requestUri.startsWith("https://")) {
+			try {
+				const fetchResp = await httpClient(requestUri);
+				if (fetchResp.ok) {
+					inboundJwt = await fetchResp.text();
+					rewroteRequestUri = true;
+				}
+			} catch (err) {
+				console.error(
+					`[op:${entityId}] request_uri fetch failed for ${requestUri}: ${err instanceof Error ? err.message : String(err)}`,
+				);
+			}
+		}
+
+		if (inboundJwt) {
+			const pre = await preregister(inboundJwt);
+			if (!pre.ok) {
 				// Trust-failure errors are returned to the user-agent, NOT to redirect_uri.
-				res
-					.status(400)
-					.type("application/json")
-					.send(
-						JSON.stringify({
-							error: result.error.code,
-							error_description: result.error.description,
-							entity_id: entityId,
-							entity_type: "openid-provider",
-						}),
-					);
+				sendOidcJsonError(res, pre.errorCode, pre.errorDescription);
 				return;
 			}
+		}
 
-			const rpMeta = result.value.resolvedRpMetadata as Record<string, unknown>;
-			// jwks fallback: prefer openid_relying_party.jwks, then fall back to the
-			// federation EC's top-level jwks (the leaf statement in the resolved chain).
-			const leafStmt = result.value.trustChain.statements[0];
-			const fedJwks = leafStmt?.payload.jwks as { keys: JWK[] } | undefined;
-			const rpJwks = (rpMeta.jwks as { keys: JWK[] } | undefined) ?? fedJwks;
-			registerClient(clientStore, {
-				client_id: result.value.rpEntityId,
-				redirect_uris: (rpMeta.redirect_uris as string[]) || [],
-				response_types: (rpMeta.response_types as string[]) || ["code"],
-				grant_types: (rpMeta.grant_types as string[]) || ["authorization_code"],
-				// Automatic registration uses asymmetric crypto only; never a client_secret.
-				token_endpoint_auth_method: "private_key_jwt",
-				token_endpoint_auth_signing_alg:
-					(rpMeta.token_endpoint_auth_signing_alg as string | undefined) ?? DEFAULT_SIGNING_ALG,
-				id_token_signed_response_alg:
-					(rpMeta.id_token_signed_response_alg as string | undefined) ?? DEFAULT_SIGNING_ALG,
-				request_object_signing_alg:
-					(rpMeta.request_object_signing_alg as string | undefined) ?? DEFAULT_SIGNING_ALG,
-				jwks: rpJwks,
-				application_type: "web",
-				// NEVER set client_secret on automatic registration.
-			});
+		// Rewrite the URL when we resolved a by-reference request_uri ourselves:
+		// node-oidc-provider rejects non-urn request_uri values, so we substitute
+		// the fetched JWT inline as ?request=<JWT> and drop ?request_uri=.
+		if (rewroteRequestUri && inboundJwt) {
+			const rewritten = new URL(req.originalUrl, entityId);
+			rewritten.searchParams.delete("request_uri");
+			rewritten.searchParams.set("request", inboundJwt);
+			const rewrittenSearch = rewritten.search;
+			req.url = `${rewritten.pathname}${rewrittenSearch}`;
+			(req as unknown as { originalUrl: string }).originalUrl =
+				`${rewritten.pathname}${rewrittenSearch}`;
+			// Express caches parsed query — refresh it for downstream middleware.
+			(req as unknown as { query: Record<string, unknown> }).query = Object.fromEntries(
+				rewritten.searchParams.entries(),
+			);
+		}
+
+		const handler = oidc.callback() as RequestHandler;
+		return handler(req, res, next);
+	});
+
+	// ── POST /auth for form_post delivery ────────────────────────────────────
+	// The body is already urlencoded-parsed by the middleware mounted above.
+	app.post("/auth", async (req, res, next) => {
+		const body = req.body as Record<string, unknown> | undefined;
+		const requestJwt = body?.request;
+		if (typeof requestJwt === "string") {
+			const pre = await preregister(requestJwt);
+			if (!pre.ok) {
+				sendOidcJsonError(res, pre.errorCode, pre.errorDescription);
+				return;
+			}
+		}
+		const handler = oidc.callback() as RequestHandler;
+		return handler(req, res, next);
+	});
+
+	// ── POST /request — PAR interceptor ──────────────────────────────────────
+	// node-oidc-provider's PAR endpoint requires client auth; in federation
+	// automatic registration the RP is not yet registered, so we intercept,
+	// federation-pre-register the client (with private_key_jwt), then defer to
+	// node-oidc-provider's PAR handler. The client_assertion the lib sent
+	// alongside `request=` is then validated against the now-registered client
+	// and the PAR succeeds with a urn-style request_uri.
+	app.post("/request", async (req, res, next) => {
+		const body = req.body as Record<string, unknown> | undefined;
+		const requestJwt = body?.request;
+		if (typeof requestJwt === "string") {
+			const pre = await preregister(requestJwt);
+			if (!pre.ok) {
+				sendOidcJsonError(res, pre.errorCode, pre.errorDescription);
+				return;
+			}
 		}
 		const handler = oidc.callback() as RequestHandler;
 		return handler(req, res, next);
