@@ -28,9 +28,21 @@ import {
 import type { EntityType, HttpClient, JWK, TrustAnchorSet } from "@oidfed/core";
 import { entityId, generateSigningKey } from "@oidfed/core";
 import { type LeafEntity, createLeafEntity } from "@oidfed/leaf";
+import { OIDCRegistrationAdapter } from "@oidfed/oidc";
 import { createAuthorityHonoApp } from "./entities/authority.js";
+import { createDemoRpHonoApp } from "./entities/demo-rp.js";
 import { createLeafHonoApp } from "./entities/leaf.js";
 import { createOpExpressApp } from "./entities/op.js";
+
+/**
+ * RPs that participate in the visible OIDC demo flow. Other RPs serve only their
+ * federation surface (`/.well-known/openid-federation`) — kept narrow per the
+ * single-anchor-only constraint on the OIDC layer.
+ */
+const DEMO_RP_ENTITY_IDS: ReadonlySet<string> = new Set([
+	"https://rp1.single.fed.oidfed.com",
+	"https://rp2.single.fed.oidfed.com",
+]);
 import { entityIdToHostname, topologyAliases } from "./lib/subdomain.js";
 import {
 	type EntityKeyPair,
@@ -145,6 +157,11 @@ export async function bootstrapFederation(
 			if (entity.entityConfigurationTtlSeconds !== undefined) {
 				authorityConfig.entityConfigurationTtlSeconds = entity.entityConfigurationTtlSeconds;
 			}
+			// OP-role authorities validate inbound RP metadata against the OIDC schema during
+			// /federation_registration (required for OIDC-profile authorities).
+			if (entity.protocolRole === "op") {
+				authorityConfig.registrationProtocolAdapter = new OIDCRegistrationAdapter();
+			}
 
 			// The dynamically-assembled `Record<string, unknown>` above is structurally
 			// compatible with AuthorityConfig; the cast bridges from the lambda-built
@@ -159,6 +176,8 @@ export async function bootstrapFederation(
 					authority,
 					entityId: entity.id,
 					trustAnchors: topologyTrustAnchors,
+					signingKey: keys.signing,
+					publicSigningKey: keys.public,
 					...(options.httpClient !== undefined ? { httpClient: options.httpClient } : {}),
 				});
 				listeners.set(hostname, expressApp as unknown as RequestListener);
@@ -176,11 +195,28 @@ export async function bootstrapFederation(
 			const keys = getKeys(entity.id);
 			const authorityHints = entity.authorityHints?.map((h) => entityId(h)) ?? [];
 
+			// Republish the openid_relying_party metadata with an explicit jwks field so that
+			// signature verification finds the key on both the openid_relying_party metadata
+			// JWKS path and the federation EC top-level jwks. Clone — do not mutate the
+			// topology data.
+			const baseRpMeta = entity.metadata.openid_relying_party as
+				| Record<string, unknown>
+				| undefined;
+			const enrichedMetadata = baseRpMeta
+				? {
+						...entity.metadata,
+						openid_relying_party: {
+							...baseRpMeta,
+							jwks: { keys: [keys.public] },
+						},
+					}
+				: entity.metadata;
+
 			const leafConfig: Record<string, unknown> = {
 				entityId: entityId(entity.id),
 				signingKeys: [keys.signing],
 				authorityHints,
-				metadata: entity.metadata,
+				metadata: enrichedMetadata,
 			};
 			if (entity.trustMarks) leafConfig.trustMarks = entity.trustMarks;
 			if (entity.entityConfigurationTtlSeconds !== undefined) {
@@ -195,8 +231,34 @@ export async function bootstrapFederation(
 			runtimes.set(entity.id, { server: leaf, keys });
 
 			const hostname = entityIdToHostname(entity.id);
-			const honoApp = createLeafHonoApp(leaf, entity.id);
-			listeners.set(hostname, getRequestListener(honoApp.fetch));
+
+			// Demo RPs participate in the visible OIDC flow; other RPs serve only the
+			// federation surface via the bare leaf factory.
+			if (entity.protocolRole === "rp" && DEMO_RP_ENTITY_IDS.has(entity.id)) {
+				const opEntity = topology.entities.find((e) => e.protocolRole === "op");
+				if (!opEntity) {
+					throw new Error(`Demo RP ${entity.id} has no OP in its topology`);
+				}
+				const rpMeta = (enrichedMetadata.openid_relying_party as Record<string, unknown>) ?? {};
+				const registrationTypes = rpMeta.client_registration_types as string[] | undefined;
+				const registrationMode = registrationTypes?.[0] === "explicit" ? "explicit" : "automatic";
+				const demoApp = createDemoRpHonoApp({
+					leaf,
+					entityId: entity.id,
+					opEntityId: opEntity.id,
+					signingKey: keys.signing,
+					publicSigningKey: keys.public,
+					trustAnchors: topologyTrustAnchors,
+					metadata: enrichedMetadata as Record<string, Record<string, unknown>>,
+					registrationMode,
+					authorityHints: entity.authorityHints ?? [],
+					...(options.httpClient !== undefined ? { httpClient: options.httpClient } : {}),
+				});
+				listeners.set(hostname, getRequestListener(demoApp.fetch));
+			} else {
+				const honoApp = createLeafHonoApp(leaf, entity.id);
+				listeners.set(hostname, getRequestListener(honoApp.fetch));
+			}
 		}
 
 		// 5. Register each entity in its parent's subordinate store.
