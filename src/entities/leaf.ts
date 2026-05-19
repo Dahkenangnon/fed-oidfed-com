@@ -32,5 +32,31 @@ export function createLeafHonoApp(leaf: LeafEntity, entityId: string): Hono {
 		return leafHandler(request);
 	});
 
+	// Unified JSON envelope for unhandled paths — same shape as the other participants.
+	app.notFound((c) =>
+		c.json(
+			{
+				error: "not_found",
+				error_description: "Path not handled by this leaf entity.",
+				entity_id: entityId,
+				entity_type: "leaf-rp",
+			},
+			404,
+		),
+	);
+
+	app.onError((err, c) => {
+		console.error(`[leaf:${entityId}] error: ${err.message}`);
+		return c.json(
+			{
+				error: "server_error",
+				error_description: "Internal error",
+				entity_id: entityId,
+				entity_type: "leaf-rp",
+			},
+			500,
+		);
+	});
+
 	return app;
 }

@@ -51,7 +51,35 @@ export function createAuthorityHonoApp(authority: AuthorityServer, entityId: str
 		}
 		const request = new Request(url, init);
 
-		return federationHandler(request);
+		const response = await federationHandler(request);
+
+		// Unify the 404 envelope so participants speak one error vocabulary.
+		if (response.status === 404) {
+			return c.json(
+				{
+					error: "not_found",
+					error_description: "Path not handled by this federation authority.",
+					entity_id: entityId,
+					entity_type: "federation-authority",
+				},
+				404,
+			);
+		}
+
+		return response;
+	});
+
+	app.onError((err, c) => {
+		console.error(`[authority:${entityId}] error: ${err.message}`);
+		return c.json(
+			{
+				error: "server_error",
+				error_description: "Internal error",
+				entity_id: entityId,
+				entity_type: "federation-authority",
+			},
+			500,
+		);
 	});
 
 	return app;
