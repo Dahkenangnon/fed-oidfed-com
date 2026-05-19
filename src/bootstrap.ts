@@ -252,6 +252,9 @@ export async function bootstrapFederation(
 					metadata: enrichedMetadata as Record<string, Record<string, unknown>>,
 					registrationMode,
 					authorityHints: entity.authorityHints ?? [],
+					...(entity.protocolDelivery !== undefined
+						? { requestDelivery: entity.protocolDelivery }
+						: {}),
 					...(options.httpClient !== undefined ? { httpClient: options.httpClient } : {}),
 				});
 				listeners.set(hostname, getRequestListener(demoApp.fetch));
