@@ -89,6 +89,9 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 		httpClient = fetch,
 	} = config;
 	const rpAuthorityHints = authorityHints.map((h) => toEntityId(h));
+	// Trust anchor entity IDs surfaced on the landing page so viewers can pull
+	// up the TA's Entity Configuration alongside the OP's and the RP's own.
+	const trustAnchorIds = Array.from(trustAnchors.keys()).map((k) => String(k));
 
 	const app = new Hono();
 	const leafHandler = leaf.handler();
@@ -119,7 +122,15 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 
 	// ── Landing page ─────────────────────────────────────────────────────────
 	app.get("/", (c) => {
-		return c.html(renderLandingPage({ entityId, opEntityId, registrationMode }));
+		return c.html(
+			renderLandingPage({
+				entityId,
+				opEntityId,
+				registrationMode,
+				requestDelivery,
+				trustAnchorIds,
+			}),
+		);
 	});
 
 	// ── Start login ──────────────────────────────────────────────────────────
@@ -464,6 +475,7 @@ ${
 		: `<h3>Claim issues</h3><ul>${claimErrors.map((e) => `<li><code>${htmlEscape(e)}</code></li>`).join("")}</ul>`
 }
 <h2>Trust chain</h2>
+<p><small>Every signature below was verified in real time during your sign-in &mdash; before the OP accepted the Request Object and before any OIDC step ran. This chain <em>is</em> the registration.</small></p>
 <ol>${chain.map((s) => `<li><code>${htmlEscape(s.iss)} → ${htmlEscape(s.sub)}</code></li>`).join("")}</ol>
 `,
 			}),
@@ -649,15 +661,66 @@ function renderLandingPage(opts: {
 	entityId: string;
 	opEntityId: string;
 	registrationMode: "automatic" | "explicit";
+	requestDelivery: RequestDelivery;
+	trustAnchorIds: ReadonlyArray<string>;
 }): string {
+	const callout =
+		opts.registrationMode === "automatic"
+			? renderAutomaticCallout(opts.requestDelivery)
+			: renderExplicitCallout();
+	const taLinks = opts.trustAnchorIds
+		.map(
+			(ta) =>
+				`<li><a href="${htmlEscape(ta)}/.well-known/openid-federation"><code>${htmlEscape(ta)}</code></a></li>`,
+		)
+		.join("");
 	return `<!doctype html><html lang=en><head><meta charset=utf-8><title>${htmlEscape(opts.entityId)}</title></head>
 <body>
 <h1>${htmlEscape(opts.entityId)}</h1>
-<p>Registration mode: <code>${htmlEscape(opts.registrationMode)}</code></p>
+<p>Registration mode: <code>${htmlEscape(opts.registrationMode)}</code>${
+		opts.registrationMode === "automatic"
+			? ` &middot; delivery: <code>${htmlEscape(opts.requestDelivery)}</code>`
+			: ""
+	}</p>
 <p>OP: <code>${htmlEscape(opts.opEntityId)}</code></p>
-<p><a href="/start-login">Sign in via OP →</a></p>
-<p><small>Demo RP. <a href="/.well-known/openid-federation">Entity Configuration</a></small></p>
+<p><a href="/start-login"><strong>Sign in via OP →</strong></a></p>
+${callout}
+<h2>Federation state</h2>
+<p><small>The OP has never been told about this RP. Inspect the live Entity Configurations to confirm — every signature in the trust chain is independent of OIDC.</small></p>
+<ul>
+<li><a href="/.well-known/openid-federation"><code>${htmlEscape(opts.entityId)}/.well-known/openid-federation</code></a> (this RP)</li>
+<li><a href="${htmlEscape(opts.opEntityId)}/.well-known/openid-federation"><code>${htmlEscape(opts.opEntityId)}/.well-known/openid-federation</code></a> (OP)</li>
+${taLinks}
+</ul>
 </body></html>`;
+}
+
+function renderAutomaticCallout(delivery: RequestDelivery): string {
+	const deliveryLine =
+		delivery === "form_post"
+			? "submit a signed Request Object via HTTP POST body (no URL ceiling)"
+			: delivery === "query"
+				? "redirect to the OP with the signed Request Object in the <code>?request=</code> query parameter"
+				: delivery === "request_uri"
+					? "host the signed Request Object at a one-time URL and pass <code>?request_uri=</code> to the OP"
+					: "POST the signed Request Object to the OP's <code>pushed_authorization_request_endpoint</code>, then redirect with the issued <code>urn:</code> request URI";
+	return `<h2>What happens when you click</h2>
+<ol>
+<li>This RP signs a <strong>Request Object</strong> JWT whose JWS header embeds the RP&rsquo;s trust chain (this RP &rarr; Trust Anchor).</li>
+<li>The RP will ${deliveryLine}.</li>
+<li>The OP validates the chain against its own Trust Anchor, verifies the Request Object signature against the RP key resolved from the chain, then proceeds to the OIDC code flow.</li>
+</ol>
+<p><strong>No pre-registration step.</strong> Trust is established in-band by the chain you can inspect below.</p>`;
+}
+
+function renderExplicitCallout(): string {
+	return `<h2>What happens when you click</h2>
+<ol>
+<li>This RP signs an <strong>Entity Configuration</strong> JWT and POSTs it to the OP&rsquo;s <code>federation_registration_endpoint</code>.</li>
+<li>The OP validates the trust chain, mints a client registration, and returns a signed <em>Explicit Registration Response</em> Entity Statement containing the assigned <code>client_id</code> (and optional <code>client_secret</code>).</li>
+<li>The RP redirects the user-agent to <code>/auth?client_id=&hellip;</code> &mdash; a plain OIDC authorization request, <strong>no Request Object</strong>, no embedded chain.</li>
+</ol>
+<p><strong>One round-trip ahead of the auth request</strong> exchanges the federation primitives for a stable client_id, then it&rsquo;s standard OIDC.</p>`;
 }
 
 function renderAutoSubmitForm(action: string, fields: Record<string, string>): string {
