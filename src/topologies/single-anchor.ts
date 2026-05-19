@@ -44,6 +44,7 @@ export const singleAnchorTopology: TopologyDefinition = {
 					issuer: OP,
 					authorization_endpoint: `${OP}/auth`,
 					token_endpoint: `${OP}/token`,
+					pushed_authorization_request_endpoint: `${OP}/request`,
 					jwks_uri: `${OP}/jwks`,
 					response_types_supported: ["code"],
 					subject_types_supported: ["public"],

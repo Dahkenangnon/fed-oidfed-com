@@ -20,4 +20,11 @@ export interface EntityDefinition {
 	trustMarkOwners?: Record<string, { sub: string; jwks: { keys: unknown[] } }>;
 	trustMarkDelegations?: Record<string, string>;
 	entityConfigurationTtlSeconds?: number;
+	/**
+	 * For RP leaves participating in the visible OIDC demo: how the signed
+	 * Request Object reaches the OP's authorization endpoint.
+	 * Defaults to "form_post" — chain-bearing Request Objects exceed nginx
+	 * proxy_buffer_size when sent in a Location header.
+	 */
+	protocolDelivery?: "query" | "form_post" | "request_uri" | "par";
 }
