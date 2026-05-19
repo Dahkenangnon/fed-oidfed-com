@@ -3,88 +3,62 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>fed-oidfed-com — live OpenID Federation 1.0 topologies</title>
+		<title>fed-oidfed-com — OpenID Federation 1.0 demo deployment</title>
 		<meta
 			name="description"
-			content="Six live OpenID Federation 1.0 topologies running at *.fed.oidfed.com — single-anchor, hierarchical, multi-anchor, cross-federation, constrained, and policy-operators. Inspect them with explore.oidfed.com or @oidfed/cli."
+			content="Six OpenID Federation 1.0 topologies deployed under *.fed.oidfed.com — single-anchor, hierarchical, multi-anchor, cross-federation, constrained, and policy-operators. Inspect them with explore.oidfed.com or the @oidfed/cli."
 		/>
-		<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23007acc'/%3E%3C/svg%3E" />
+		<link
+			rel="icon"
+			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23007acc'/%3E%3C/svg%3E"
+		/>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
 			rel="stylesheet"
 		/>
 		<style>
-			/* ──────────────────────────────────────────────────────────────────
-			   Design tokens — mirror oidfed/apps/home/app/app.css
-			   ────────────────────────────────────────────────────────────────── */
 			:root {
-				--font-heading: "Inter", system-ui, sans-serif;
 				--font-sans: "Inter", system-ui, sans-serif;
 				--font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-				--brand-50: #e6f2ff;
-				--brand-100: #b3d9ff;
-				--brand-200: #80bfff;
 				--brand-300: #4da6ff;
-				--brand-400: #1a8cff;
 				--brand-500: #007acc;
 				--brand-600: #006bb3;
-				--brand-700: #005c99;
-				--brand-800: #004d80;
-				--brand-900: #003d66;
 
-				--background: #ffffff;
-				--foreground: #262626;
+				--bg: #ffffff;
+				--fg: #262626;
 				--muted: rgba(0, 0, 0, 0.04);
-				--muted-foreground: #6b6b6b;
+				--muted-fg: #6b6b6b;
 				--card: #ffffff;
-				--card-foreground: #262626;
 				--border: rgba(0, 0, 0, 0.08);
-				--input: rgba(0, 0, 0, 0.1);
-				--ring: var(--brand-400);
-				--primary: var(--brand-500);
-				--primary-foreground: #ffffff;
-				--accent: rgba(0, 0, 0, 0.04);
-				--accent-foreground: #1f1f1f;
-				--success: #10b981;
-				--success-foreground: #047857;
+				--brand: var(--brand-500);
+				--brand-soft: rgba(0, 122, 204, 0.08);
+				--brand-fg: #ffffff;
 
-				--radius: 0.625rem;
-				--radius-sm: calc(var(--radius) * 0.6);
-				--radius-md: calc(var(--radius) * 0.8);
-				--radius-lg: var(--radius);
-				--radius-xl: calc(var(--radius) * 1.4);
-				--radius-2xl: calc(var(--radius) * 1.8);
+				--r: 0.5rem;
+				--r-lg: 0.75rem;
 			}
 
 			@media (prefers-color-scheme: dark) {
 				:root {
-					--background: #0b0d10;
-					--foreground: #f4f4f5;
+					--bg: #0b0d10;
+					--fg: #f4f4f5;
 					--muted: rgba(255, 255, 255, 0.04);
-					--muted-foreground: #a0a0a0;
+					--muted-fg: #a0a0a0;
 					--card: #11141a;
-					--card-foreground: #f4f4f5;
-					--border: rgba(255, 255, 255, 0.06);
-					--input: rgba(255, 255, 255, 0.08);
-					--primary: var(--brand-400);
-					--primary-foreground: #0b0d10;
-					--ring: var(--brand-500);
-					--accent: rgba(255, 255, 255, 0.04);
-					--accent-foreground: #f4f4f5;
+					--border: rgba(255, 255, 255, 0.08);
+					--brand: var(--brand-300);
+					--brand-soft: rgba(77, 166, 255, 0.1);
+					--brand-fg: #0b0d10;
 				}
 			}
 
-			/* ──────────────────────────────────────────────────────────────────
-			   Base
-			   ────────────────────────────────────────────────────────────────── */
 			*,
 			*::before,
 			*::after {
 				box-sizing: border-box;
-				border-color: var(--border);
 			}
 			html {
 				scroll-behavior: smooth;
@@ -92,49 +66,124 @@
 			body {
 				margin: 0;
 				font-family: var(--font-sans);
-				font-size: 16px;
+				font-size: 15px;
 				line-height: 1.5;
-				color: var(--foreground);
-				background: var(--background);
+				color: var(--fg);
+				background: var(--bg);
 				-webkit-font-smoothing: antialiased;
 				-moz-osx-font-smoothing: grayscale;
 			}
 			a {
-				color: inherit;
+				color: var(--brand);
 				text-decoration: none;
+			}
+			a:hover {
+				color: var(--brand-600);
 			}
 			code,
 			pre,
 			kbd {
 				font-family: var(--font-mono);
 			}
+			code {
+				font-size: 0.9em;
+				background: var(--muted);
+				padding: 0.05em 0.35em;
+				border-radius: 4px;
+			}
 			::selection {
-				background: var(--brand-500);
+				background: var(--brand);
 				color: #fff;
 			}
 
-			/* ──────────────────────────────────────────────────────────────────
-			   Layout primitives
-			   ────────────────────────────────────────────────────────────────── */
-			.container {
-				max-width: 72rem;
+			.wrap {
+				max-width: 56rem;
 				margin: 0 auto;
 				padding: 0 1.5rem;
 			}
-			.section {
+
+			/* ────── Header ────── */
+			header.top {
 				border-bottom: 1px solid var(--border);
-				padding: 5rem 0;
+				padding: 2.5rem 0 2rem;
 			}
-			@media (min-width: 1024px) {
-				.section {
-					padding: 7rem 0;
-				}
+			.eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-family: var(--font-mono);
+				font-size: 11px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--muted-fg);
 			}
-			.section--muted {
-				background: var(--muted);
+			.eyebrow::before {
+				content: "";
+				width: 6px;
+				height: 6px;
+				border-radius: 9999px;
+				background: var(--brand);
+			}
+			h1 {
+				margin: 0.75rem 0 0;
+				font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				line-height: 1.1;
+			}
+			.lede {
+				margin: 0.75rem 0 0;
+				color: var(--muted-fg);
+				max-width: 42rem;
+				font-size: 1rem;
+				line-height: 1.55;
+			}
+			.cta {
+				margin-top: 1.5rem;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.375rem;
+				padding: 0 0.875rem;
+				height: 2.25rem;
+				border-radius: var(--r);
+				font-size: 13.5px;
+				font-weight: 500;
+				border: 1px solid var(--border);
+				background: var(--card);
+				color: var(--fg);
+				cursor: pointer;
+				transition: all 120ms ease;
+				white-space: nowrap;
+			}
+			.btn:hover {
+				border-color: rgba(0, 122, 204, 0.4);
+				color: var(--brand);
+			}
+			.btn.primary {
+				background: var(--brand);
+				color: var(--brand-fg);
+				border-color: transparent;
+			}
+			.btn.primary:hover {
+				background: var(--brand-600);
+				color: #fff;
+			}
+			.btn svg {
+				width: 13px;
+				height: 13px;
 			}
 
-			.signal-label {
+			/* ────── Section ────── */
+			section {
+				padding: 2.5rem 0;
+				border-bottom: 1px solid var(--border);
+			}
+			.sec-label {
 				display: inline-flex;
 				align-items: center;
 				gap: 0.75rem;
@@ -142,1633 +191,824 @@
 				font-size: 10.5px;
 				letter-spacing: 0.18em;
 				text-transform: uppercase;
-				color: var(--muted-foreground);
+				color: var(--muted-fg);
+				margin-bottom: 0.75rem;
 			}
-			.signal-label .dot {
-				width: 0.375rem;
-				height: 0.375rem;
-				border-radius: 9999px;
-				background: var(--brand-500);
-			}
-			.signal-label .num {
+			.sec-label .num {
 				font-variant-numeric: tabular-nums;
 			}
-			.signal-label .rule {
+			.sec-label .rule {
+				display: inline-block;
 				width: 2rem;
 				height: 1px;
 				background: var(--border);
 			}
-
-			h1,
-			h2,
-			h3,
-			h4 {
-				font-family: var(--font-heading);
-				margin: 0;
-				letter-spacing: -0.02em;
-				color: var(--foreground);
-			}
-			h1 {
-				font-size: clamp(2.5rem, 6vw, 4.75rem);
-				font-weight: 700;
-				line-height: 1.02;
-				letter-spacing: -0.03em;
-			}
 			h2 {
-				font-size: clamp(1.875rem, 3.5vw, 2.5rem);
+				margin: 0 0 0.5rem;
+				font-size: 1.5rem;
 				font-weight: 600;
-				line-height: 1.1;
+				letter-spacing: -0.015em;
 			}
-			h3 {
-				font-size: 1.125rem;
-				font-weight: 600;
-				line-height: 1.3;
-				letter-spacing: -0.01em;
-			}
-			p {
-				margin: 0;
-			}
-			.lede {
-				font-size: 1.125rem;
-				line-height: 1.6;
-				color: var(--muted-foreground);
-				max-width: 36rem;
-			}
-			.body {
-				font-size: 0.9375rem;
-				line-height: 1.65;
-				color: var(--muted-foreground);
+			.sec-lede {
+				color: var(--muted-fg);
+				margin: 0 0 1.5rem;
+				max-width: 42rem;
+				font-size: 14.5px;
 			}
 
-			/* ──────────────────────────────────────────────────────────────────
-			   Buttons
-			   ────────────────────────────────────────────────────────────────── */
-			.btn {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.375rem;
-				padding: 0 1rem;
-				height: 2.5rem;
-				border-radius: var(--radius-md);
-				font-family: var(--font-sans);
-				font-size: 0.875rem;
-				font-weight: 500;
-				border: 1px solid transparent;
-				cursor: pointer;
-				transition: all 150ms ease;
-				white-space: nowrap;
-			}
-			.btn--primary {
-				background: var(--primary);
-				color: var(--primary-foreground);
-			}
-			.btn--primary:hover {
-				background: var(--brand-600);
-				transform: translateY(-1px);
-			}
-			.btn--outline {
-				background: transparent;
-				color: var(--foreground);
-				border-color: var(--border);
-			}
-			.btn--outline:hover {
-				border-color: rgba(0, 0, 0, 0.25);
-				background: var(--muted);
-			}
-			@media (prefers-color-scheme: dark) {
-				.btn--outline:hover {
-					border-color: rgba(255, 255, 255, 0.25);
-				}
-			}
-			.btn--ghost {
-				background: transparent;
-				color: var(--muted-foreground);
-				border-color: var(--border);
-				width: 2.25rem;
-				height: 2.25rem;
-				padding: 0;
-				justify-content: center;
-			}
-			.btn--ghost:hover {
-				color: var(--foreground);
-				border-color: rgba(0, 0, 0, 0.25);
-			}
-			@media (prefers-color-scheme: dark) {
-				.btn--ghost:hover {
-					border-color: rgba(255, 255, 255, 0.25);
-				}
-			}
-			.arrow {
-				transition: transform 150ms ease;
-			}
-			.btn:hover .arrow {
-				transform: translate(2px, -2px);
-			}
-
-			/* ──────────────────────────────────────────────────────────────────
-			   §01 · Hero
-			   ────────────────────────────────────────────────────────────────── */
-			.hero {
-				position: relative;
-				border-bottom: 1px solid var(--border);
-				overflow: hidden;
-			}
-			.hero-bg {
-				position: absolute;
-				inset: 0;
-				pointer-events: none;
-				background-image:
-					radial-gradient(currentColor 1px, transparent 1px),
-					radial-gradient(currentColor 1px, transparent 1px);
-				background-size: 28px 28px, 28px 28px;
-				background-position: 0 0, 14px 14px;
-				color: rgba(0, 0, 0, 0.06);
-				mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-				-webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-			}
-			@media (prefers-color-scheme: dark) {
-				.hero-bg {
-					color: rgba(255, 255, 255, 0.07);
-				}
-			}
-			.hero-glow {
-				position: absolute;
-				left: 50%;
-				top: 0;
-				transform: translateX(-50%);
-				width: 56rem;
-				height: 24rem;
-				background: rgba(0, 122, 204, 0.1);
-				filter: blur(80px);
-				border-radius: 9999px;
-				z-index: -1;
-				pointer-events: none;
-			}
-			.hero-inner {
-				position: relative;
-				padding: 4rem 1.5rem;
-				max-width: 72rem;
-				margin: 0 auto;
-				display: grid;
-				gap: 3rem;
-				align-items: center;
-			}
-			@media (min-width: 1024px) {
-				.hero-inner {
-					grid-template-columns: 1.15fr 1fr;
-					gap: 4rem;
-					padding: 7rem 1.5rem;
-				}
-			}
-			.hero-badge {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.625rem;
-				background: var(--primary);
-				color: var(--primary-foreground);
-				padding: 0.4rem 0.875rem;
-				border-radius: 9999px;
-				font-family: var(--font-mono);
-				font-size: 10.5px;
-				font-weight: 500;
-				letter-spacing: 0.2em;
-				text-transform: uppercase;
-				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-			}
-			.hero-badge .pulse {
-				position: relative;
-				display: inline-flex;
-				width: 0.375rem;
-				height: 0.375rem;
-			}
-			.hero-badge .pulse::before {
-				content: "";
-				position: absolute;
-				inset: 0;
-				border-radius: 9999px;
-				background: var(--primary-foreground);
-				opacity: 0.7;
-				animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-			}
-			.hero-badge .pulse::after {
-				content: "";
-				position: absolute;
-				inset: 0;
-				border-radius: 9999px;
-				background: var(--primary-foreground);
-			}
-			.hero-badge .sep {
-				width: 1px;
-				height: 0.75rem;
-				background: rgba(255, 255, 255, 0.4);
-			}
-			.hero h1 {
-				margin-top: 1.5rem;
-			}
-			.hero h1 .grad {
-				background: linear-gradient(
-					to right,
-					var(--brand-600),
-					var(--brand-500),
-					var(--brand-300)
-				);
-				-webkit-background-clip: text;
-				background-clip: text;
-				color: transparent;
-				display: block;
-			}
-			@media (prefers-color-scheme: dark) {
-				.hero h1 .grad {
-					background: linear-gradient(
-						to right,
-						var(--brand-300),
-						var(--brand-400),
-						var(--brand-500)
-					);
-					-webkit-background-clip: text;
-					background-clip: text;
-					color: transparent;
-				}
-			}
-			.hero .lede {
-				margin-top: 1.5rem;
-			}
-			.hero-cta {
-				margin-top: 2.5rem;
+			/* ────── Topology accordion (details/summary) ────── */
+			.topos {
 				display: flex;
-				flex-wrap: wrap;
-				gap: 0.75rem;
-				align-items: center;
+				flex-direction: column;
+				gap: 0.5rem;
 			}
-			.hero-meta {
-				margin-top: 2.5rem;
-				display: flex;
-				flex-wrap: wrap;
-				gap: 1.5rem;
-				font-family: var(--font-mono);
-				font-size: 10.5px;
-				text-transform: uppercase;
-				letter-spacing: 0.16em;
-				color: var(--muted-foreground);
-			}
-			.hero-meta span {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.375rem;
-			}
-			.hero-meta .dot {
-				width: 0.375rem;
-				height: 0.375rem;
-				border-radius: 9999px;
-			}
-
-			/* Hero graph card */
-			.graph-card {
-				position: relative;
+			details.topo {
 				border: 1px solid var(--border);
+				border-radius: var(--r-lg);
 				background: var(--card);
-				border-radius: var(--radius-xl);
-				padding: 1.25rem;
-				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+				overflow: hidden;
+				transition: border-color 120ms ease;
 			}
-			@media (min-width: 640px) {
-				.graph-card {
-					padding: 1.5rem;
-				}
+			details.topo[open] {
+				border-color: rgba(0, 122, 204, 0.35);
 			}
-			.graph-chrome {
+			details.topo summary {
 				display: flex;
 				align-items: center;
-				justify-content: space-between;
-				border-bottom: 1px solid var(--border);
-				padding-bottom: 0.75rem;
-				margin-bottom: 1rem;
+				gap: 0.75rem;
+				padding: 0.875rem 1rem;
+				cursor: pointer;
+				list-style: none;
+				user-select: none;
 			}
-			.graph-chrome .dots {
-				display: flex;
-				gap: 0.375rem;
+			details.topo summary::-webkit-details-marker {
+				display: none;
 			}
-			.graph-chrome .dots span {
-				width: 0.625rem;
-				height: 0.625rem;
-				border-radius: 9999px;
+			details.topo summary::before {
+				content: "";
+				display: inline-block;
+				width: 0;
+				height: 0;
+				border-style: solid;
+				border-width: 5px 0 5px 7px;
+				border-color: transparent transparent transparent var(--muted-fg);
+				transition: transform 150ms ease;
+				flex-shrink: 0;
 			}
-			.graph-chrome .label {
+			details.topo[open] summary::before {
+				transform: rotate(90deg);
+			}
+			details.topo summary:hover {
+				background: var(--brand-soft);
+			}
+			.topo-name {
 				font-family: var(--font-mono);
-				font-size: 10px;
-				text-transform: uppercase;
-				letter-spacing: 0.2em;
-				color: var(--muted-foreground);
-			}
-			.graph-status {
-				position: absolute;
-				bottom: 1.5rem;
-				left: 1.5rem;
-				right: 1.5rem;
-				background: rgba(255, 255, 255, 0.85);
-				border: 1px solid rgba(0, 0, 0, 0.1);
-				border-radius: var(--radius-md);
-				padding: 0.75rem;
-				backdrop-filter: blur(8px);
-				pointer-events: none;
-			}
-			@media (min-width: 640px) {
-				.graph-status {
-					left: auto;
-					max-width: 16rem;
-				}
-			}
-			@media (prefers-color-scheme: dark) {
-				.graph-status {
-					background: rgba(17, 20, 26, 0.85);
-					border-color: rgba(255, 255, 255, 0.1);
-				}
-			}
-			.graph-status-row {
-				display: flex;
-				justify-content: space-between;
-				font-family: var(--font-mono);
-				font-size: 10px;
-				line-height: 1.6;
-				color: var(--muted-foreground);
-			}
-			.graph-status-row.head {
-				margin-bottom: 0.5rem;
-				color: var(--foreground);
-				font-weight: 500;
-			}
-			.graph-status-row .val {
-				color: var(--foreground);
-				font-variant-numeric: tabular-nums;
-			}
-			.graph-status .badge {
-				font-size: 9px;
+				font-size: 13.5px;
 				font-weight: 600;
-				text-transform: uppercase;
-				letter-spacing: 0.05em;
-				background: rgba(16, 185, 129, 0.1);
-				color: #047857;
-				padding: 0.125rem 0.375rem;
-				border-radius: var(--radius-sm);
+				color: var(--fg);
+				min-width: 9rem;
 			}
-			@media (prefers-color-scheme: dark) {
-				.graph-status .badge {
-					color: #34d399;
-				}
+			.topo-tagline {
+				color: var(--muted-fg);
+				font-size: 13.5px;
+				line-height: 1.4;
+				flex: 1;
 			}
-
-			/* ──────────────────────────────────────────────────────────────────
-			   Section header
-			   ────────────────────────────────────────────────────────────────── */
-			.section-head {
-				margin-bottom: 3rem;
-			}
-			.section-head h2 {
-				margin-top: 1.5rem;
-			}
-			.section-head .lede {
-				margin-top: 1rem;
-			}
-
-			/* ──────────────────────────────────────────────────────────────────
-			   Topology cards
-			   ────────────────────────────────────────────────────────────────── */
-			.topo-grid {
+			.topo-body {
+				padding: 0 1rem 1rem;
 				display: grid;
-				gap: 1.25rem;
+				gap: 1rem;
 				grid-template-columns: 1fr;
 			}
 			@media (min-width: 720px) {
-				.topo-grid {
+				.topo-body {
 					grid-template-columns: 1fr 1fr;
 				}
 			}
-			@media (min-width: 1024px) {
-				.topo-grid {
-					grid-template-columns: 1fr 1fr 1fr;
-				}
+			.topo-body h4 {
+				margin: 0 0 0.5rem;
+				font-family: var(--font-mono);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				color: var(--muted-fg);
 			}
-			.topo {
+			.entities {
 				display: flex;
 				flex-direction: column;
-				gap: 0.75rem;
-				padding: 1.5rem;
-				border: 1px solid var(--border);
-				background: var(--card);
-				border-radius: var(--radius-xl);
-				transition: all 200ms ease;
+				gap: 0.25rem;
+				font-family: var(--font-mono);
+				font-size: 12px;
 			}
-			.topo:hover {
-				transform: translateY(-2px);
-				border-color: rgba(0, 122, 204, 0.4);
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-			}
-			.topo .name {
+			.entities a {
 				display: flex;
 				align-items: center;
-				justify-content: space-between;
-				font-family: var(--font-mono);
-				font-size: 0.875rem;
-				font-weight: 600;
-				color: var(--foreground);
+				gap: 0.5rem;
+				padding: 0.25rem 0;
+				color: var(--fg);
 			}
-			.topo .name .idx {
-				font-size: 9px;
+			.entities a:hover {
+				color: var(--brand);
+			}
+			.entities .role {
+				display: inline-block;
+				width: 2.75rem;
+				font-size: 9.5px;
 				font-weight: 600;
 				text-transform: uppercase;
 				letter-spacing: 0.05em;
-				color: var(--muted-foreground);
+				color: var(--muted-fg);
 				background: var(--muted);
-				padding: 0.125rem 0.375rem;
-				border-radius: var(--radius-sm);
+				padding: 0.1rem 0.3rem;
+				border-radius: 3px;
+				text-align: center;
+				flex-shrink: 0;
 			}
-			.topo .desc {
-				font-size: 13.5px;
-				line-height: 1.55;
-				color: var(--muted-foreground);
-			}
-			.topo .ta {
-				margin-top: auto;
-				padding-top: 0.75rem;
-				border-top: 1px solid var(--border);
-				font-family: var(--font-mono);
-				font-size: 11px;
-				color: var(--brand-500);
+			.try {
 				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+			}
+			.try a.try-link {
+				display: inline-flex;
 				align-items: center;
 				gap: 0.375rem;
+				font-size: 12.5px;
+				font-weight: 500;
+				color: var(--brand);
 			}
-			.topo .ta .arrow {
-				font-size: 12px;
+			.try-cmd {
+				font-family: var(--font-mono);
+				font-size: 11.5px;
+				background: var(--muted);
+				border: 1px solid var(--border);
+				border-radius: 5px;
+				padding: 0.45rem 0.6rem;
+				line-height: 1.45;
+				color: var(--fg);
+				word-break: break-all;
 			}
-			.topo .ta:hover {
-				color: var(--brand-600);
+			.try-cmd .p {
+				color: var(--muted-fg);
+				user-select: none;
 			}
 
-			/* ──────────────────────────────────────────────────────────────────
-			   Test instruction cards
-			   ────────────────────────────────────────────────────────────────── */
-			.test-grid {
+			/* ────── Inspect section ────── */
+			.tools {
 				display: grid;
-				gap: 1.25rem;
+				gap: 1rem;
 				grid-template-columns: 1fr;
 			}
-			@media (min-width: 900px) {
-				.test-grid {
+			@media (min-width: 720px) {
+				.tools {
 					grid-template-columns: 1fr 1fr;
 				}
 			}
-			.test-card {
+			.tool {
+				border: 1px solid var(--border);
+				border-radius: var(--r-lg);
+				background: var(--card);
+				padding: 1.25rem;
 				display: flex;
 				flex-direction: column;
-				border: 1px solid var(--border);
-				background: var(--card);
-				border-radius: var(--radius-xl);
-				overflow: hidden;
-				transition: all 200ms ease;
+				gap: 0.625rem;
+				transition: border-color 120ms ease;
 			}
-			.test-card:hover {
-				transform: translateY(-2px);
-				border-color: rgba(0, 122, 204, 0.4);
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+			.tool:hover {
+				border-color: rgba(0, 122, 204, 0.35);
 			}
-			.test-card-head {
-				padding: 1.5rem 1.5rem 1rem;
-			}
-			.test-card-head .tag {
+			.tool .tool-tag {
 				display: inline-block;
 				font-family: var(--font-mono);
-				font-size: 9px;
+				font-size: 9.5px;
 				font-weight: 600;
+				letter-spacing: 0.08em;
 				text-transform: uppercase;
-				letter-spacing: 0.1em;
-				color: var(--muted-foreground);
+				color: var(--muted-fg);
 				background: var(--muted);
-				padding: 0.25rem 0.5rem;
-				border-radius: var(--radius-sm);
+				padding: 0.15rem 0.4rem;
+				border-radius: 4px;
+				align-self: flex-start;
 			}
-			.test-card-head h3 {
-				margin-top: 0.75rem;
+			.tool h3 {
+				margin: 0;
+				font-family: var(--font-mono);
+				font-size: 14.5px;
+				font-weight: 600;
+				color: var(--fg);
 			}
-			.test-card-head .body {
-				margin-top: 0.75rem;
+			.tool h3 a {
+				color: inherit;
 			}
-			.terminal {
+			.tool h3 a:hover {
+				color: var(--brand);
+			}
+			.tool p {
+				margin: 0;
+				font-size: 13.5px;
+				color: var(--muted-fg);
+				line-height: 1.55;
+			}
+			.tool .cli-block {
 				background: #0e1117;
 				color: #e6e6e6;
-				padding: 1.25rem 1.5rem;
 				font-family: var(--font-mono);
-				font-size: 12.5px;
-				line-height: 1.7;
-				border-top: 1px solid var(--border);
+				font-size: 12px;
+				line-height: 1.65;
+				padding: 0.75rem 0.875rem;
+				border-radius: 6px;
+				overflow-x: auto;
 			}
-			.terminal .prompt {
+			.cli-block .p {
 				color: #6b7280;
 			}
-			.terminal .cmd {
+			.cli-block .c {
 				color: var(--brand-300);
 			}
-			.terminal .arg {
-				color: #e6e6e6;
-			}
-			.terminal .ok {
+			.cli-block .ok {
 				color: #34d399;
 			}
-			.terminal .comment {
+			.cli-block .cm {
 				color: #6b7280;
 			}
-			.terminal .row {
-				display: flex;
-				gap: 0.5rem;
-			}
-			.terminal .row + .row {
-				margin-top: 0.25rem;
-			}
-			.terminal-link-row {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				padding: 1rem 1.5rem;
-				background: var(--muted);
-				font-family: var(--font-mono);
-				font-size: 11.5px;
-				color: var(--brand-500);
-				font-weight: 500;
-			}
-			.terminal-link-row a {
-				display: flex;
-				align-items: center;
-				gap: 0.25rem;
-				transition: color 150ms ease;
-			}
-			.terminal-link-row a:hover {
-				color: var(--brand-600);
+			.cli-block .out {
+				color: #e6e6e6;
 			}
 
-			.explorer-preview {
-				display: block;
-				width: 100%;
-				aspect-ratio: 16 / 9;
-				background: linear-gradient(
-					135deg,
-					rgba(0, 122, 204, 0.04),
-					rgba(0, 122, 204, 0.01)
-				);
-				border-top: 1px solid var(--border);
-				position: relative;
-				overflow: hidden;
+			/* ────── Footer ────── */
+			footer {
+				padding: 1.75rem 0;
+				color: var(--muted-fg);
+				font-size: 12.5px;
 			}
-			@media (prefers-color-scheme: dark) {
-				.explorer-preview {
-					background: linear-gradient(
-						135deg,
-						rgba(0, 122, 204, 0.08),
-						rgba(0, 122, 204, 0.02)
-					);
-				}
-			}
-
-			/* ──────────────────────────────────────────────────────────────────
-			   Footer
-			   ────────────────────────────────────────────────────────────────── */
-			.footer {
-				padding: 3rem 0;
-				background: var(--muted);
-				border-bottom: 1px solid var(--border);
-			}
-			.footer-inner {
+			footer .row {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 1.5rem;
-				align-items: center;
 				justify-content: space-between;
-				font-family: var(--font-mono);
-				font-size: 11.5px;
-				color: var(--muted-foreground);
+				align-items: center;
+				gap: 1rem;
 			}
-			.footer a {
-				color: var(--muted-foreground);
-				transition: color 150ms ease;
-			}
-			.footer a:hover {
-				color: var(--foreground);
-			}
-			.footer-links {
+			footer .links {
 				display: flex;
-				gap: 1.5rem;
+				gap: 1rem;
 				flex-wrap: wrap;
 			}
-
-			/* ──────────────────────────────────────────────────────────────────
-			   Animations
-			   ────────────────────────────────────────────────────────────────── */
-			@keyframes ping {
-				75%,
-				100% {
-					transform: scale(2);
-					opacity: 0;
-				}
+			footer a {
+				color: var(--muted-fg);
 			}
-			@keyframes ta-pulse {
-				0%,
-				100% {
-					transform: scale(1);
-					opacity: 0.7;
-				}
-				50% {
-					transform: scale(1.12);
-					opacity: 1;
-				}
-			}
-			.ta-pulse {
-				transform-origin: 240px 100px;
-				animation: ta-pulse 3.6s ease-in-out infinite;
-			}
-			@keyframes chain-draw {
-				from {
-					stroke-dasharray: 240;
-					stroke-dashoffset: 240;
-				}
-				to {
-					stroke-dasharray: 240;
-					stroke-dashoffset: 0;
-				}
-			}
-			.chain-edge {
-				animation: chain-draw 1.1s ease-out both;
-			}
-			.chain-edge-1 {
-				animation-delay: 0.15s;
-			}
-			.chain-edge-2 {
-				animation-delay: 0.2s;
-			}
-			.chain-edge-3 {
-				animation-delay: 0.4s;
-			}
-			.chain-edge-4 {
-				animation-delay: 0.45s;
-			}
-			.chain-edge-5 {
-				animation-delay: 0.5s;
-			}
-			.chain-edge-6 {
-				animation-delay: 0.55s;
-			}
-			@keyframes fade-rise {
-				from {
-					opacity: 0;
-					transform: translateY(12px);
-				}
-				to {
-					opacity: 1;
-					transform: translateY(0);
-				}
-			}
-			.fade-rise {
-				animation: fade-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-			}
-			.delay-2 {
-				animation-delay: 0.2s;
-			}
-			@media (prefers-reduced-motion: reduce) {
-				.ta-pulse,
-				.chain-edge,
-				.fade-rise,
-				.hero-badge .pulse::before {
-					animation: none !important;
-				}
+			footer a:hover {
+				color: var(--fg);
 			}
 		</style>
 	</head>
 	<body>
-		<!-- ────────────────────────────────────────────────────────────────────
-		     §01 · Hero
-		     ──────────────────────────────────────────────────────────────────── -->
-		<header class="hero">
-			<div class="hero-bg" aria-hidden="true"></div>
-			<div class="hero-glow" aria-hidden="true"></div>
-
-			<div class="hero-inner">
-				<div class="fade-rise">
-					<div class="hero-badge">
-						<span class="pulse" aria-hidden="true"></span>
-						<span class="num">§01</span>
-						<span class="sep" aria-hidden="true"></span>
-						<span>Live federation deployment</span>
-					</div>
-
-					<h1>
-						<span>OpenID Federation 1.0</span>
-						<span class="grad">in six topologies, live.</span>
-					</h1>
-
-					<p class="lede">
-						Six federation topologies running side-by-side at
-						<code style="font-family: var(--font-mono); font-size: 0.95em">
-							*.fed.oidfed.com
-						</code>
-						— a reference implementation of OpenID Federation 1.0 built on the
-						<a
-							href="https://github.com/Dahkenangnon/oidfed"
-							style="color: var(--brand-500); font-weight: 500"
-							>@oidfed</a
-						>
-						packages.
-					</p>
-
-					<p class="body" style="margin-top: 1rem; max-width: 36rem">
-						Inspect any of them with
-						<a
-							href="https://explore.oidfed.com"
-							style="color: var(--brand-500); font-weight: 500"
-							>explore.oidfed.com</a
-						>
-						(visual, browser-based) or
-						<a
-							href="https://www.npmjs.com/package/@oidfed/cli"
-							style="color: var(--brand-500); font-weight: 500"
-							>@oidfed/cli</a
-						>
-						(terminal, scriptable). Trust chains resolve end-to-end across
-						authorities, intermediates, and leaves.
-					</p>
-
-					<div class="hero-cta">
-						<a
-							class="btn btn--primary"
-							href="https://explore.oidfed.com"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Open the Explorer
-							<svg
-								class="arrow"
-								width="14"
-								height="14"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								aria-hidden="true"
-							>
-								<line x1="7" y1="17" x2="17" y2="7"></line>
-								<polyline points="7 7 17 7 17 17"></polyline>
-							</svg>
-						</a>
-						<a
-							class="btn btn--outline"
-							href="#topologies"
-						>
-							See the topologies
-						</a>
-						<a
-							class="btn btn--ghost"
-							href="https://github.com/Dahkenangnon/fed-oidfed-com"
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label="View source on GitHub"
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 16 16"
-								fill="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-								/>
-							</svg>
-						</a>
-					</div>
-
-					<div class="hero-meta">
-						<span>
-							<span class="dot" style="background: #10b981"></span>
-							MIT license
-						</span>
-						<span>
-							<span class="dot" style="background: var(--brand-500)"></span>
-							6 topologies · 34 entities
-						</span>
-					</div>
-				</div>
-
-				<!-- Federation graph -->
-				<div class="fade-rise delay-2" style="position: relative">
-					<div class="graph-card">
-						<div class="graph-chrome">
-							<div class="dots">
-								<span style="background: rgba(248, 113, 113, 0.7)"></span>
-								<span style="background: rgba(251, 191, 36, 0.7)"></span>
-								<span style="background: rgba(52, 211, 153, 0.7)"></span>
-							</div>
-							<span class="label">resolve.trust.chain</span>
-							<span class="label" style="letter-spacing: 0.05em">ES256</span>
-						</div>
-
-						<div style="position: relative">
-							<svg
-								viewBox="0 0 480 520"
-								style="height: auto; width: 100%; display: block"
-								role="img"
-								aria-label="OpenID Federation trust chain: one Trust Anchor at the root, two Intermediate Authorities, and four leaf entities."
-							>
-								<title>OpenID Federation trust chain diagram</title>
-								<defs>
-									<linearGradient id="edge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-										<stop offset="0%" stop-color="#007acc" stop-opacity="0.9" />
-										<stop offset="100%" stop-color="#4da6ff" stop-opacity="0.3" />
-									</linearGradient>
-									<radialGradient id="ta-glow" cx="50%" cy="50%" r="50%">
-										<stop offset="0%" stop-color="#007acc" stop-opacity="0.45" />
-										<stop offset="100%" stop-color="#007acc" stop-opacity="0" />
-									</radialGradient>
-								</defs>
-
-								<!-- Grid backdrop -->
-								<g stroke="currentColor" stroke-width="0.4" opacity="0.08">
-									<line x1="0" x2="480" y1="0" y2="0"></line>
-									<line x1="0" x2="480" y1="52" y2="52"></line>
-									<line x1="0" x2="480" y1="104" y2="104"></line>
-									<line x1="0" x2="480" y1="156" y2="156"></line>
-									<line x1="0" x2="480" y1="208" y2="208"></line>
-									<line x1="0" x2="480" y1="260" y2="260"></line>
-									<line x1="0" x2="480" y1="312" y2="312"></line>
-									<line x1="0" x2="480" y1="364" y2="364"></line>
-									<line x1="0" x2="480" y1="416" y2="416"></line>
-									<line x1="0" x2="480" y1="468" y2="468"></line>
-								</g>
-
-								<!-- Edges -->
-								<g fill="none" stroke="url(#edge-grad)" stroke-width="1.5">
-									<path
-										class="chain-edge chain-edge-1"
-										d="M 240 100 C 240 160, 140 170, 130 230"
-									></path>
-									<path
-										class="chain-edge chain-edge-2"
-										d="M 240 100 C 240 160, 340 170, 350 230"
-									></path>
-									<path
-										class="chain-edge chain-edge-3"
-										d="M 130 260 C 130 320, 70 340, 70 400"
-									></path>
-									<path
-										class="chain-edge chain-edge-4"
-										d="M 130 260 C 130 320, 190 340, 190 400"
-									></path>
-									<path
-										class="chain-edge chain-edge-5"
-										d="M 350 260 C 350 320, 290 340, 290 400"
-									></path>
-									<path
-										class="chain-edge chain-edge-6"
-										d="M 350 260 C 350 320, 410 340, 410 400"
-									></path>
-								</g>
-
-								<!-- Trust Anchor -->
-								<g>
-									<circle class="ta-pulse" cx="240" cy="100" r="48" fill="url(#ta-glow)"></circle>
-									<circle cx="240" cy="100" r="20" fill="#007acc"></circle>
-									<circle
-										cx="240"
-										cy="100"
-										r="20"
-										fill="none"
-										stroke="#80bfff"
-										stroke-width="1.5"
-										opacity="0.5"
-									></circle>
-									<text
-										x="240"
-										y="57"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="9"
-										letter-spacing="1.8"
-										fill="currentColor"
-										opacity="0.55"
-										style="text-transform: uppercase"
-									>
-										Trust Anchor
-									</text>
-									<text
-										x="240"
-										y="72"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="9"
-										fill="currentColor"
-										opacity="0.4"
-									>
-										ta.example.org
-									</text>
-								</g>
-
-								<!-- Intermediates -->
-								<g>
-									<circle
-										cx="130"
-										cy="245"
-										r="18"
-										fill="none"
-										stroke="#4da6ff"
-										stroke-width="1"
-										opacity="0.45"
-									></circle>
-									<circle cx="130" cy="245" r="12" fill="#007acc"></circle>
-									<text
-										x="130"
-										y="278"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8"
-										fill="currentColor"
-										opacity="0.55"
-										style="text-transform: uppercase; letter-spacing: 1.4px"
-									>
-										Intermediate
-									</text>
-									<text
-										x="130"
-										y="290"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8.5"
-										fill="currentColor"
-										opacity="0.4"
-									>
-										ia-a.example.com
-									</text>
-								</g>
-								<g>
-									<circle
-										cx="350"
-										cy="245"
-										r="18"
-										fill="none"
-										stroke="#4da6ff"
-										stroke-width="1"
-										opacity="0.45"
-									></circle>
-									<circle cx="350" cy="245" r="12" fill="#007acc"></circle>
-									<text
-										x="350"
-										y="278"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8"
-										fill="currentColor"
-										opacity="0.55"
-										style="text-transform: uppercase; letter-spacing: 1.4px"
-									>
-										Intermediate
-									</text>
-									<text
-										x="350"
-										y="290"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8.5"
-										fill="currentColor"
-										opacity="0.4"
-									>
-										ia-b.example.net
-									</text>
-								</g>
-
-								<!-- Leaves -->
-								<g>
-									<circle
-										cx="70"
-										cy="415"
-										r="13"
-										fill="none"
-										stroke="#4da6ff"
-										stroke-width="1"
-										opacity="0.45"
-									></circle>
-									<circle cx="70" cy="415" r="8" fill="#007acc"></circle>
-									<text
-										x="70"
-										y="443"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8"
-										fill="currentColor"
-										opacity="0.55"
-										style="letter-spacing: 1.4px"
-									>
-										OP
-									</text>
-								</g>
-								<g>
-									<circle
-										cx="190"
-										cy="415"
-										r="13"
-										fill="none"
-										stroke="#4da6ff"
-										stroke-width="1"
-										opacity="0.45"
-									></circle>
-									<circle cx="190" cy="415" r="8" fill="#007acc"></circle>
-									<text
-										x="190"
-										y="443"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8"
-										fill="currentColor"
-										opacity="0.55"
-										style="letter-spacing: 1.4px"
-									>
-										RP
-									</text>
-								</g>
-								<g>
-									<circle
-										cx="290"
-										cy="415"
-										r="13"
-										fill="none"
-										stroke="#4da6ff"
-										stroke-width="1"
-										opacity="0.45"
-									></circle>
-									<circle cx="290" cy="415" r="8" fill="#007acc"></circle>
-									<text
-										x="290"
-										y="443"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8"
-										fill="currentColor"
-										opacity="0.55"
-										style="letter-spacing: 1.4px"
-									>
-										OP
-									</text>
-								</g>
-								<g>
-									<circle
-										cx="410"
-										cy="415"
-										r="13"
-										fill="none"
-										stroke="#4da6ff"
-										stroke-width="1"
-										opacity="0.45"
-									></circle>
-									<circle cx="410" cy="415" r="8" fill="#007acc"></circle>
-									<text
-										x="410"
-										y="443"
-										text-anchor="middle"
-										font-family="JetBrains Mono, monospace"
-										font-size="8"
-										fill="currentColor"
-										opacity="0.55"
-										style="letter-spacing: 1.4px"
-									>
-										RP
-									</text>
-								</g>
-							</svg>
-
-							<!-- Status overlay -->
-							<div class="graph-status">
-								<div class="graph-status-row head">
-									<span style="display: inline-flex; align-items: center; gap: 0.375rem">
-										<svg
-											width="14"
-											height="14"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="#10b981"
-											stroke-width="2.5"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-										>
-											<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-											<polyline points="22 4 12 14.01 9 11.01"></polyline>
-										</svg>
-										<span class="val">chain.valid</span>
-									</span>
-									<span class="badge">verified</span>
-								</div>
-								<div class="graph-status-row">
-									<span>statements</span><span class="val">3</span>
-								</div>
-								<div class="graph-status-row">
-									<span>policy_ops</span><span class="val">4</span>
-								</div>
-								<div class="graph-status-row">
-									<span>expires_in</span><span class="val">23h 47m</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<p
-						style="
-							margin-top: 0.75rem;
-							padding-left: 0.5rem;
-							font-family: var(--font-mono);
-							font-size: 10.5px;
-							color: var(--muted-foreground);
-							text-transform: uppercase;
-							letter-spacing: 0.22em;
-						"
-					>
-						ta.example.org → op-1.example.com · trust chain resolved
-					</p>
-				</div>
-			</div>
-		</header>
-
-		<!-- ────────────────────────────────────────────────────────────────────
-		     §02 · Topologies
-		     ──────────────────────────────────────────────────────────────────── -->
-		<section id="topologies" class="section section--muted">
-			<div class="container">
-				<div class="section-head">
-					<span class="signal-label">
-						<span class="dot"></span>
-						<span class="num">§02</span>
-						<span class="rule"></span>
-						<span>Topologies</span>
-					</span>
-					<h2>Six federations, each with a different shape.</h2>
-					<p class="lede">
-						The same `@oidfed` packages compose into six structurally distinct federations.
-						Click any Trust Anchor URL — it opens directly in
-						<a href="https://explore.oidfed.com" style="color: var(--brand-500)"
-							>explore.oidfed.com</a
-						>
-						with the full trust chain rendered.
-					</p>
-				</div>
-
-				<div class="topo-grid">
+		<header class="top">
+			<div class="wrap">
+				<span class="eyebrow">Demo federation · Live</span>
+				<h1>Six OpenID Federation 1.0 topologies, deployed.</h1>
+				<p class="lede">
+					Reference deployment of
+					<a href="https://github.com/Dahkenangnon/oidfed">@oidfed</a> at
+					<code>*.fed.oidfed.com</code>. Each topology below is a distinct trust structure — pick
+					one and inspect its trust chain, entity statements, and resolved metadata using
+					<a href="https://explore.oidfed.com">explore.oidfed.com</a> or the
+					<a href="https://www.npmjs.com/package/@oidfed/cli">@oidfed/cli</a>.
+				</p>
+				<div class="cta">
+					<a class="btn primary" href="#topologies">See the topologies</a>
+					<a class="btn" href="#inspect">How to inspect</a>
 					<a
-						class="topo"
-						href="https://explore.oidfed.com/?entity=https%3A%2F%2Fsingle.fed.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="name">
-							<span>single-anchor</span>
-							<span class="idx">01</span>
-						</div>
-						<p class="desc">
-							1 Trust Anchor, 1 OP, 2 RPs — one configured for automatic registration, one
-							for explicit. The minimal complete federation.
-						</p>
-						<span class="ta">
-							single.fed.oidfed.com
-							<span class="arrow">→</span>
-						</span>
-					</a>
-
-					<a
-						class="topo"
-						href="https://explore.oidfed.com/?entity=https%3A%2F%2Fta.hier.fed.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="name">
-							<span>hierarchical</span>
-							<span class="idx">02</span>
-						</div>
-						<p class="desc">
-							TA → 2 Intermediates (edu, health) → leaf OP + RP under each branch. Exercises
-							multi-step trust chains and per-branch policy.
-						</p>
-						<span class="ta">
-							ta.hier.fed.oidfed.com
-							<span class="arrow">→</span>
-						</span>
-					</a>
-
-					<a
-						class="topo"
-						href="https://explore.oidfed.com/?entity=https%3A%2F%2Fta-gov.multi.fed.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="name">
-							<span>multi-anchor</span>
-							<span class="idx">03</span>
-						</div>
-						<p class="desc">
-							2 Trust Anchors (gov, industry) above a shared Intermediate. Tests trust-anchor
-							intersection between RP and OP.
-						</p>
-						<span class="ta">
-							ta-gov.multi.fed.oidfed.com
-							<span class="arrow">→</span>
-						</span>
-					</a>
-
-					<a
-						class="topo"
-						href="https://explore.oidfed.com/?entity=https%3A%2F%2Fta-x.xfed.fed.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="name">
-							<span>cross-federation</span>
-							<span class="idx">04</span>
-						</div>
-						<p class="desc">
-							Two independent federations bridged by a dual-anchor entity that lists both
-							TAs in its authority hints.
-						</p>
-						<span class="ta">
-							ta-x.xfed.fed.oidfed.com
-							<span class="arrow">→</span>
-						</span>
-					</a>
-
-					<a
-						class="topo"
-						href="https://explore.oidfed.com/?entity=https%3A%2F%2Fta.constr.fed.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="name">
-							<span>constrained</span>
-							<span class="idx">05</span>
-						</div>
-						<p class="desc">
-							TA with <code>max_path_length=0</code>: direct subordinates resolve, deeper
-							chains are rejected by design.
-						</p>
-						<span class="ta">
-							ta.constr.fed.oidfed.com
-							<span class="arrow">→</span>
-						</span>
-					</a>
-
-					<a
-						class="topo"
-						href="https://explore.oidfed.com/?entity=https%3A%2F%2Fta.policy.fed.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="name">
-							<span>policy-operators</span>
-							<span class="idx">06</span>
-						</div>
-						<p class="desc">
-							IA exercising every metadata policy operator —
-							<code>subset_of</code>, <code>value</code>, <code>add</code>, and
-							<code>essential</code>.
-						</p>
-						<span class="ta">
-							ta.policy.fed.oidfed.com
-							<span class="arrow">→</span>
-						</span>
-					</a>
-				</div>
-			</div>
-		</section>
-
-		<!-- ────────────────────────────────────────────────────────────────────
-		     §03 · How to test
-		     ──────────────────────────────────────────────────────────────────── -->
-		<section class="section">
-			<div class="container">
-				<div class="section-head">
-					<span class="signal-label">
-						<span class="dot"></span>
-						<span class="num">§03</span>
-						<span class="rule"></span>
-						<span>How to test</span>
-					</span>
-					<h2>Two ways in.</h2>
-					<p class="lede">
-						Pick the surface that matches your workflow. Both target the live deployment at
-						<code style="font-family: var(--font-mono)">*.fed.oidfed.com</code>.
-					</p>
-				</div>
-
-				<div class="test-grid">
-					<!-- Explorer -->
-					<a
-						class="test-card"
-						href="https://explore.oidfed.com"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="test-card-head">
-							<span class="tag">Visual · Browser</span>
-							<h3>explore.oidfed.com</h3>
-							<p class="body">
-								Paste any entity URL — Trust Anchor, Intermediate, OP, or RP — and the
-								Explorer renders the entity configuration, trust chain, resolved metadata,
-								and any active trust marks. No install, runs in the browser.
-							</p>
-						</div>
-						<div class="explorer-preview" aria-hidden="true">
-							<svg
-								viewBox="0 0 480 270"
-								preserveAspectRatio="xMidYMid meet"
-								style="width: 100%; height: 100%; display: block"
-							>
-								<defs>
-									<linearGradient id="ex-edge" x1="0%" y1="0%" x2="100%" y2="100%">
-										<stop offset="0%" stop-color="#007acc" stop-opacity="0.7" />
-										<stop offset="100%" stop-color="#4da6ff" stop-opacity="0.3" />
-									</linearGradient>
-								</defs>
-								<g stroke="currentColor" stroke-width="0.3" opacity="0.1">
-									<line x1="0" x2="480" y1="60" y2="60"></line>
-									<line x1="0" x2="480" y1="120" y2="120"></line>
-									<line x1="0" x2="480" y1="180" y2="180"></line>
-									<line x1="60" x2="60" y1="0" y2="270"></line>
-									<line x1="160" x2="160" y1="0" y2="270"></line>
-									<line x1="320" x2="320" y1="0" y2="270"></line>
-									<line x1="420" x2="420" y1="0" y2="270"></line>
-								</g>
-								<g fill="none" stroke="url(#ex-edge)" stroke-width="1.5">
-									<path d="M 240 60 C 240 90, 140 105, 130 135"></path>
-									<path d="M 240 60 C 240 90, 340 105, 350 135"></path>
-									<path d="M 130 165 C 130 195, 70 205, 70 230"></path>
-									<path d="M 350 165 C 350 195, 410 205, 410 230"></path>
-								</g>
-								<circle cx="240" cy="60" r="14" fill="#007acc"></circle>
-								<circle cx="130" cy="150" r="10" fill="#007acc"></circle>
-								<circle cx="350" cy="150" r="10" fill="#007acc"></circle>
-								<circle cx="70" cy="230" r="7" fill="#007acc"></circle>
-								<circle cx="410" cy="230" r="7" fill="#007acc"></circle>
-							</svg>
-						</div>
-						<div class="terminal-link-row">
-							<span>explore.oidfed.com</span>
-							<svg
-								class="arrow"
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							>
-								<line x1="7" y1="17" x2="17" y2="7"></line>
-								<polyline points="7 7 17 7 17 17"></polyline>
-							</svg>
-						</div>
-					</a>
-
-					<!-- CLI -->
-					<a
-						class="test-card"
-						href="https://www.npmjs.com/package/@oidfed/cli"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="test-card-head">
-							<span class="tag">Terminal · Scriptable</span>
-							<h3>@oidfed/cli</h3>
-							<p class="body">
-								Resolve trust chains, decode entity statements, verify signatures, and run
-								spec-grade validations from the command line. Suitable for CI checks, audits,
-								and ad-hoc debugging.
-							</p>
-						</div>
-						<div class="terminal">
-							<div class="row">
-								<span class="prompt">$</span>
-								<span><span class="cmd">npm</span> i -g @oidfed/cli</span>
-							</div>
-							<div class="row" style="margin-top: 0.75rem">
-								<span class="prompt">$</span>
-								<span
-									><span class="cmd">oidfed</span> resolve
-									<span class="arg">https://single.fed.oidfed.com</span></span
-								>
-							</div>
-							<div class="row">
-								<span class="ok">✓</span><span>Entity Configuration fetched</span>
-							</div>
-							<div class="row">
-								<span class="ok">✓</span><span>Trust chain assembled (3 statements)</span>
-							</div>
-							<div class="row">
-								<span class="ok">✓</span><span>Metadata policy applied</span>
-							</div>
-							<div class="row" style="margin-top: 0.5rem">
-								<span class="comment"># trust_anchor:</span>
-								<span style="color: var(--brand-300)">ta.single.fed.oidfed.com</span>
-							</div>
-						</div>
-						<div class="terminal-link-row">
-							<span>npm install -g @oidfed/cli</span>
-							<svg
-								class="arrow"
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							>
-								<line x1="7" y1="17" x2="17" y2="7"></line>
-								<polyline points="7 7 17 7 17 17"></polyline>
-							</svg>
-						</div>
-					</a>
-				</div>
-
-				<!-- Curl quick-check -->
-				<div style="margin-top: 3rem">
-					<span class="signal-label">
-						<span class="dot"></span>
-						<span class="num">§03.1</span>
-						<span class="rule"></span>
-						<span>Or just curl</span>
-					</span>
-					<p class="body" style="margin-top: 1rem; max-width: 36rem">
-						If you only need the signed Entity Configuration JWT, every entity exposes
-						<code>/.well-known/openid-federation</code>:
-					</p>
-					<div
-						class="terminal"
-						style="margin-top: 1rem; border-radius: var(--radius-xl); border: 1px solid var(--border)"
-					>
-						<div class="row">
-							<span class="prompt">$</span>
-							<span
-								><span class="cmd">curl</span> -sS
-								<span class="arg">https://single.fed.oidfed.com/.well-known/openid-federation</span>
-								<span style="color: #6b7280">|</span>
-								<span class="cmd">cut</span> -d. -f2
-								<span style="color: #6b7280">|</span>
-								<span class="cmd">base64</span> -d
-								<span style="color: #6b7280">|</span>
-								<span class="cmd">jq</span> .iss
-							</span>
-						</div>
-						<div class="row" style="margin-top: 0.5rem">
-							<span style="color: #e6e6e6">"https://ta.single.fed.oidfed.com"</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<!-- ────────────────────────────────────────────────────────────────────
-		     §04 · Source
-		     ──────────────────────────────────────────────────────────────────── -->
-		<section class="section section--muted">
-			<div class="container">
-				<div class="section-head">
-					<span class="signal-label">
-						<span class="dot"></span>
-						<span class="num">§04</span>
-						<span class="rule"></span>
-						<span>Source</span>
-					</span>
-					<h2>Run your own copy.</h2>
-					<p class="lede">
-						This site describes the deployment, but every line that runs it is open source.
-						Read it, fork it, run it locally, or stand up your own federation against your
-						own infrastructure.
-					</p>
-				</div>
-
-				<div class="test-grid">
-					<a
-						class="test-card"
+						class="btn"
 						href="https://github.com/Dahkenangnon/fed-oidfed-com"
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						<div class="test-card-head">
-							<span class="tag">Repository · MIT</span>
-							<h3>github.com/Dahkenangnon/fed-oidfed-com</h3>
-							<p class="body">
-								The deployment that powers everything on this page — bootstrap, vhost
-								dispatch, OP integration with node-oidc-provider, six topology definitions,
-								and 17 integration tests that exercise the marquee RP-side flows
-								(<code>discoverEntity</code>, <code>automaticRegistration</code>,
-								<code>explicitRegistration</code>).
-							</p>
-						</div>
-						<div class="terminal-link-row">
-							<span>git clone github.com/Dahkenangnon/fed-oidfed-com</span>
-							<svg
-								class="arrow"
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							>
-								<line x1="7" y1="17" x2="17" y2="7"></line>
-								<polyline points="7 7 17 7 17 17"></polyline>
-							</svg>
-						</div>
+						Source
+						<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+							<path
+								d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+							/>
+						</svg>
 					</a>
+				</div>
+			</div>
+		</header>
 
-					<a
-						class="test-card"
-						href="https://github.com/Dahkenangnon/oidfed"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<div class="test-card-head">
-							<span class="tag">Library · Apache-2.0</span>
-							<h3>github.com/Dahkenangnon/oidfed</h3>
-							<p class="body">
-								The four <code>@oidfed/*</code> packages this deployment composes —
-								<code>core</code>, <code>authority</code>, <code>leaf</code>, and
-								<code>oidc</code> — plus the
+		<section id="topologies">
+			<div class="wrap">
+				<span class="sec-label">
+					<span class="num">§02</span>
+					<span class="rule"></span>
+					<span>Topologies</span>
+				</span>
+				<h2>Pick a federation. Expand for its entities and a one-liner to try.</h2>
+				<p class="sec-lede">
+					Each topology lists its entities by role. Clicking an entity opens it in the explorer
+					on the trust-chain view; the “try with the CLI” box gives the exact command.
+				</p>
+
+				<div class="topos">
+					<!-- 1. single-anchor -->
+					<details class="topo">
+						<summary>
+							<span class="topo-name">single-anchor</span>
+							<span class="topo-tagline">
+								1 Trust Anchor, 1 OP, 2 RPs (one automatic, one explicit).
+							</span>
+						</summary>
+						<div class="topo-body">
+							<div>
+								<h4>Entities</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.single.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta.single.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop.single.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op.single.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.single.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span
+										><span>rp1.single.fed.oidfed.com (automatic)</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp2.single.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp2.single.fed.oidfed.com (explicit)</span></a
+									>
+								</div>
+								<p class="sec-lede" style="margin-top: 0.75rem; font-size: 12.5px">
+									Aliases <code>single.fed.oidfed.com</code> and
+									<code>minimal.fed.oidfed.com</code> both resolve to the TA.
+								</p>
+							</div>
+							<div class="try">
+								<h4>Try with the CLI</h4>
+								<div class="try-cmd">
+									<span class="p">$</span> oidfed chain https://rp1.single.fed.oidfed.com
+									--trust-anchor https://ta.single.fed.oidfed.com
+								</div>
 								<a
-									href="https://github.com/Dahkenangnon/oidfed/tree/main/tests/e2e"
-									style="color: var(--brand-500)"
-									>e2e test bed</a
+									class="try-link"
+									href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.single.fed.oidfed.com"
+									target="_blank"
+									rel="noopener noreferrer"
+									>Open in explorer →</a
 								>
-								that this repo's <code>src/</code> mirrors file-for-file.
-							</p>
+							</div>
 						</div>
-						<div class="terminal-link-row">
-							<span>npm install @oidfed/core @oidfed/authority @oidfed/leaf @oidfed/oidc</span>
-							<svg
-								class="arrow"
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							>
-								<line x1="7" y1="17" x2="17" y2="7"></line>
-								<polyline points="7 7 17 7 17 17"></polyline>
-							</svg>
+					</details>
+
+					<!-- 2. hierarchical -->
+					<details class="topo">
+						<summary>
+							<span class="topo-name">hierarchical</span>
+							<span class="topo-tagline">
+								TA → 2 Intermediates (edu, health) → leaf OP + RP under each branch.
+							</span>
+						</summary>
+						<div class="topo-body">
+							<div>
+								<h4>Entities</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta.hier.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-edu.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span><span>ia-edu.hier.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-health.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span><span>ia-health.hier.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-uni.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op-uni.hier.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-hospital.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op-hospital.hier.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp1.hier.fed.oidfed.com (under edu)</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp2.hier.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span
+										><span>rp2.hier.fed.oidfed.com (under health)</span></a
+									>
+								</div>
+							</div>
+							<div class="try">
+								<h4>Try with the CLI</h4>
+								<div class="try-cmd">
+									<span class="p">$</span> oidfed chain https://op-uni.hier.fed.oidfed.com
+									--trust-anchor https://ta.hier.fed.oidfed.com
+								</div>
+								<a
+									class="try-link"
+									href="https://explore.oidfed.com/topology"
+									target="_blank"
+									rel="noopener noreferrer"
+									>Open the topology graph →</a
+								>
+							</div>
 						</div>
-					</a>
+					</details>
+
+					<!-- 3. multi-anchor -->
+					<details class="topo">
+						<summary>
+							<span class="topo-name">multi-anchor</span>
+							<span class="topo-tagline">
+								2 Trust Anchors (gov, industry) above a shared Intermediate.
+							</span>
+						</summary>
+						<div class="topo-body">
+							<div>
+								<h4>Entities</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-gov.multi.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta-gov.multi.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-industry.multi.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta-industry.multi.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia.multi.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span
+										><span>ia.multi.fed.oidfed.com (lists both TAs)</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop.multi.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op.multi.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.multi.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp1.multi.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp2.multi.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp2.multi.fed.oidfed.com</span></a
+									>
+								</div>
+							</div>
+							<div class="try">
+								<h4>Try with the CLI</h4>
+								<div class="try-cmd">
+									<span class="p">$</span> oidfed chain https://op.multi.fed.oidfed.com
+									--trust-anchor https://ta-gov.multi.fed.oidfed.com
+								</div>
+								<p class="sec-lede" style="margin: 0; font-size: 12px">
+									The chain resolves through the shared IA to either TA — re-run with
+									<code>--trust-anchor https://ta-industry.multi.fed.oidfed.com</code> to compare.
+								</p>
+							</div>
+						</div>
+					</details>
+
+					<!-- 4. cross-federation -->
+					<details class="topo">
+						<summary>
+							<span class="topo-name">cross-federation</span>
+							<span class="topo-tagline">
+								Two independent federations bridged by a dual-anchor entity.
+							</span>
+						</summary>
+						<div class="topo-body">
+							<div>
+								<h4>Federation X</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-x.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta-x.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-x.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span><span>ia-x.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-x.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op-x.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp-x.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp-x.xfed.fed.oidfed.com</span></a
+									>
+								</div>
+								<h4 style="margin-top: 0.75rem">Federation Y + bridge</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-y.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta-y.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-y.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span><span>ia-y.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-y.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op-y.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp-y.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp-y.xfed.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fbridge.xfed.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span
+										><span>bridge.xfed.fed.oidfed.com (lists both TAs)</span></a
+									>
+								</div>
+							</div>
+							<div class="try">
+								<h4>Try with the CLI</h4>
+								<div class="try-cmd">
+									<span class="p">$</span> oidfed chain https://bridge.xfed.fed.oidfed.com
+									--trust-anchor https://ta-x.xfed.fed.oidfed.com
+								</div>
+								<p class="sec-lede" style="margin: 0; font-size: 12px">
+									Swap the trust anchor to <code>ta-y</code> to see the alternative chain to the
+									sibling federation.
+								</p>
+							</div>
+						</div>
+					</details>
+
+					<!-- 5. constrained -->
+					<details class="topo">
+						<summary>
+							<span class="topo-name">constrained</span>
+							<span class="topo-tagline">
+								TA with <code>max_path_length=0</code> — direct subordinates resolve, deeper
+								chains are rejected by design.
+							</span>
+						</summary>
+						<div class="topo-body">
+							<div>
+								<h4>Entities</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.constr.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta.constr.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-direct.constr.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span
+										><span>op-direct.constr.fed.oidfed.com (resolves)</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-deep.constr.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span
+										><span>ia-deep.constr.fed.oidfed.com (would-be intermediate)</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-deep.constr.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span
+										><span>op-deep.constr.fed.oidfed.com (fails validation)</span></a
+									>
+								</div>
+							</div>
+							<div class="try">
+								<h4>Try with the CLI</h4>
+								<div class="try-cmd">
+									<span class="p">$</span> oidfed chain https://op-deep.constr.fed.oidfed.com
+									--trust-anchor https://ta.constr.fed.oidfed.com
+								</div>
+								<p class="sec-lede" style="margin: 0; font-size: 12px">
+									Expected outcome: chain rejected because the TA caps depth at zero
+									intermediates.
+								</p>
+							</div>
+						</div>
+					</details>
+
+					<!-- 6. policy-operators -->
+					<details class="topo">
+						<summary>
+							<span class="topo-name">policy-operators</span>
+							<span class="topo-tagline">
+								IA exercising every metadata policy operator (<code>subset_of</code>,
+								<code>value</code>, <code>add</code>, <code>essential</code>).
+							</span>
+						</summary>
+						<div class="topo-body">
+							<div>
+								<h4>Entities</h4>
+								<div class="entities">
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.policy.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">TA</span><span>ta.policy.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia.policy.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">IA</span
+										><span>ia.policy.fed.oidfed.com (policy operators here)</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop.policy.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">OP</span><span>op.policy.fed.oidfed.com</span></a
+									>
+									<a
+										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp.policy.fed.oidfed.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										><span class="role">RP</span><span>rp.policy.fed.oidfed.com</span></a
+									>
+								</div>
+							</div>
+							<div class="try">
+								<h4>Try with the CLI</h4>
+								<div class="try-cmd">
+									<span class="p">$</span> oidfed chain https://op.policy.fed.oidfed.com
+									--trust-anchor https://ta.policy.fed.oidfed.com
+								</div>
+								<a
+									class="try-link"
+									href="https://explore.oidfed.com/policy"
+									target="_blank"
+									rel="noopener noreferrer"
+									>Open the policy simulator →</a
+								>
+							</div>
+						</div>
+					</details>
 				</div>
 			</div>
 		</section>
 
-		<!-- ────────────────────────────────────────────────────────────────────
-		     Footer
-		     ──────────────────────────────────────────────────────────────────── -->
-		<footer class="footer">
-			<div class="container">
-				<div class="footer-inner">
-					<span>
-						fed-oidfed-com · MIT · OpenID Federation 1.0 reference deployment
-					</span>
-					<div class="footer-links">
-						<a
-							href="https://github.com/Dahkenangnon/fed-oidfed-com"
-							target="_blank"
-							rel="noopener noreferrer"
-							>GitHub</a
-						>
-						<a
-							href="https://explore.oidfed.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							>Explorer</a
-						>
-						<a
-							href="https://learn.oidfed.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							>Learn</a
-						>
-						<a
-							href="https://oidfed.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							>oidfed.com</a
-						>
-						<a
-							href="https://openid.net/specs/openid-federation-1_0.html"
-							target="_blank"
-							rel="noopener noreferrer"
-							>OIDF spec</a
-						>
+		<section id="inspect">
+			<div class="wrap">
+				<span class="sec-label">
+					<span class="num">§03</span>
+					<span class="rule"></span>
+					<span>How to inspect</span>
+				</span>
+				<h2>Two surfaces. Same federation underneath.</h2>
+				<p class="sec-lede">
+					The explorer is browser-based and visual; the CLI is a single binary that prints
+					machine-readable trees, tables, and JWTs. Pick whichever matches your task.
+				</p>
+
+				<div class="tools">
+					<div class="tool">
+						<span class="tool-tag">Visual · Browser</span>
+						<h3>
+							<a href="https://explore.oidfed.com" target="_blank" rel="noopener noreferrer"
+								>explore.oidfed.com</a
+							>
+						</h3>
+						<p>
+							Open the URL above, paste an entity into the search box on the home page, or jump
+							straight to a feature route — <code>/entity/&lt;id&gt;</code>,
+							<code>/chain/&lt;id&gt;</code>, <code>/topology</code>, <code>/policy</code>,
+							<code>/health</code>, <code>/subordinates?entity=&lt;id&gt;</code>. The entityId is
+							URL-encoded on the path.
+						</p>
+						<p>
+							Every topology card above links into <code>/chain/&lt;encoded-id&gt;</code>
+							directly.
+						</p>
 					</div>
+
+					<div class="tool">
+						<span class="tool-tag">Terminal · Scriptable</span>
+						<h3>
+							<a
+								href="https://www.npmjs.com/package/@oidfed/cli"
+								target="_blank"
+								rel="noopener noreferrer"
+								>@oidfed/cli</a
+							>
+						</h3>
+						<p>
+							Install once, then run any of <code>entity</code>, <code>chain</code>,
+							<code>resolve</code>, <code>validate</code>, <code>decode</code>,
+							<code>health</code>, <code>trust-mark-status</code>, <code>fetch</code>,
+							<code>list</code>, <code>expiry</code>, <code>verify</code>, <code>keygen</code>,
+							<code>sign</code>. Add <code>--json</code> to pipe into <code>jq</code>.
+						</p>
+						<div class="cli-block">
+							<div>
+								<span class="p">$</span> <span class="c">npm</span> i -g @oidfed/cli
+							</div>
+							<div style="margin-top: 0.5rem">
+								<span class="p">$</span> <span class="c">oidfed</span> health
+								https://ta.single.fed.oidfed.com
+							</div>
+							<div><span class="out">entity_id</span> <span class="out">https://ta.single.fed.oidfed.com</span></div>
+							<div><span class="out">healthy</span>   <span class="ok">✓</span></div>
+							<div><span class="cm">checks</span></div>
+							<div><span class="out">  /.well-known/openid-federation  ok</span></div>
+							<div><span class="out">  /federation_list                ok</span></div>
+							<div><span class="out">  /federation_fetch               ok</span></div>
+							<div><span class="out">  /federation_resolve             ok</span></div>
+							<div><span class="out">  /federation_trust_mark_status   ok</span></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<footer>
+			<div class="wrap row">
+				<span>fed-oidfed-com · MIT · OpenID Federation 1.0 reference deployment</span>
+				<div class="links">
+					<a
+						href="https://github.com/Dahkenangnon/fed-oidfed-com"
+						target="_blank"
+						rel="noopener noreferrer"
+						>Source</a
+					>
+					<a href="https://explore.oidfed.com" target="_blank" rel="noopener noreferrer"
+						>Explorer</a
+					>
+					<a
+						href="https://www.npmjs.com/package/@oidfed/cli"
+						target="_blank"
+						rel="noopener noreferrer"
+						>@oidfed/cli</a
+					>
+					<a href="https://oidfed.com" target="_blank" rel="noopener noreferrer">oidfed.com</a>
+					<a
+						href="https://openid.net/specs/openid-federation-1_0.html"
+						target="_blank"
+						rel="noopener noreferrer"
+						>OIDF spec</a
+					>
 				</div>
 			</div>
 		</footer>
