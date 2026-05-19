@@ -103,6 +103,10 @@ function send(
 		const headers: Record<string, string> = {
 			Host: host,
 			Accept: "text/html, application/json",
+			// node-oidc-provider runs with proxy:true; in production nginx terminates
+			// TLS and forwards this header. The integration server runs over HTTP, so
+			// we surface the production header explicitly to unblock secure cookies.
+			"X-Forwarded-Proto": "https",
 		};
 		if (body !== undefined) {
 			headers["Content-Type"] = "application/x-www-form-urlencoded";
@@ -233,17 +237,31 @@ async function followInteractionChain(
 	throw new Error(`followInteractionChain exceeded ${maxHops} hops looking for ${formAction} form`);
 }
 
-async function runFullOidcFlow(rpHost: string): Promise<RawResponse> {
-	const jar = new CookieJar();
+/**
+ * Extract the action and hidden input fields of the first `<form>` in `html`.
+ * The demo RP's auto-submit form is small and uses a stable template.
+ */
+function extractFormAction(html: string): string | undefined {
+	const m = /action="([^"]+)"/.exec(html);
+	return m?.[1];
+}
 
-	// 1. Start login on the RP.
-	const start = await send(jar, "GET", rpHost, "/start-login");
-	if (start.status !== 302) throw new Error(`Expected 302 from /start-login, got ${start.status}`);
-	const opAuthUrl = start.headers.location as string;
-	const opAuth = urlParts(opAuthUrl);
+function extractHiddenFields(html: string): Record<string, string> {
+	const fields: Record<string, string> = {};
+	const pattern = /<input[^>]+type="hidden"[^>]+name="([^"]+)"[^>]+value="([^"]*)"[^>]*>/gi;
+	let match = pattern.exec(html);
+	while (match !== null) {
+		const name = match[1];
+		const value = match[2];
+		if (typeof name === "string") {
+			fields[name] = value ?? "";
+		}
+		match = pattern.exec(html);
+	}
+	return fields;
+}
 
-	// 2. OP /auth → /interaction/<uid> (after federation registration + provider chain).
-	const authRes = await send(jar, "GET", opAuth.host, opAuth.path);
+async function continueAfterOpAuth(jar: CookieJar, authRes: RawResponse): Promise<RawResponse> {
 	if (authRes.status !== 302 && authRes.status !== 303) {
 		throw new Error(
 			`Expected 30x from OP /auth, got ${authRes.status}: ${authRes.body.slice(0, 400)}`,
@@ -293,6 +311,46 @@ async function runFullOidcFlow(rpHost: string): Promise<RawResponse> {
 	return final;
 }
 
+async function runFullOidcFlow(rpHost: string): Promise<RawResponse> {
+	const jar = new CookieJar();
+
+	// 1. Start login on the RP.
+	const start = await send(jar, "GET", rpHost, "/start-login");
+
+	// 2. Dispatch the request object to the OP /auth endpoint. Two shapes:
+	//   • 302 Location: redirect to the OP (query / request_uri / par modes,
+	//     and explicit-registration RPs).
+	//   • 200 HTML form: an auto-submit form_post page — extract action +
+	//     hidden inputs and POST them.
+	let authRes: RawResponse;
+	if (start.status === 302) {
+		const opAuthUrl = start.headers.location as string;
+		const opAuth = urlParts(opAuthUrl);
+		authRes = await send(jar, "GET", opAuth.host, opAuth.path);
+	} else if (
+		start.status === 200 &&
+		typeof start.headers["content-type"] === "string" &&
+		start.headers["content-type"].includes("text/html")
+	) {
+		const action = extractFormAction(start.body);
+		if (!action) {
+			throw new Error(
+				`Expected auto-submit form from /start-login, got: ${start.body.slice(0, 400)}`,
+			);
+		}
+		const fields = extractHiddenFields(start.body);
+		const opAction = urlParts(action);
+		const formBody = new URLSearchParams(fields).toString();
+		authRes = await send(jar, "POST", opAction.host, opAction.path, formBody);
+	} else {
+		throw new Error(
+			`Unexpected /start-login response: status=${start.status}, content-type=${start.headers["content-type"] ?? "<none>"}`,
+		);
+	}
+
+	return continueAfterOpAuth(jar, authRes);
+}
+
 describe("automatic OIDC flow (RP1)", () => {
 	it("completes end-to-end and renders an ID token bound to the federation", async () => {
 		const final = await runFullOidcFlow(new URL(RP1_ID).host);
@@ -313,6 +371,60 @@ describe("explicit OIDC flow (RP2)", () => {
 		expect(final.body).toContain(RP2_ID);
 		expect(final.body).toContain("alice@example.com");
 	}, 30_000);
+});
+
+describe("automatic OIDC flow — every delivery mode", () => {
+	// Per-mode harness: spin up a fresh federation with RP1's protocolDelivery
+	// pinned to the mode under test. The shared `harness` exercises the default
+	// (form_post); these add the other three.
+	const modes = ["query", "request_uri", "par"] as const;
+
+	for (const mode of modes) {
+		it(`completes end-to-end with delivery mode "${mode}"`, async () => {
+			const modeServer = http.createServer();
+			const modePort = await new Promise<number>((resolve) => {
+				modeServer.listen(0, "127.0.0.1", () => {
+					resolve((modeServer.address() as AddressInfo).port);
+				});
+			});
+			const modeHttpClient = localHttpClient(modePort);
+			const patchedTopology = {
+				...singleAnchorTopology,
+				entities: singleAnchorTopology.entities.map((e) =>
+					e.id === RP1_ID ? { ...e, protocolDelivery: mode } : e,
+				),
+			};
+			const modeBootstrap = await bootstrapFederation([patchedTopology], {
+				httpClient: modeHttpClient,
+			});
+			modeServer.on("request", (req, res) => {
+				const listener = resolveListener(modeBootstrap.listeners, req.headers.host);
+				if (!listener) {
+					res.writeHead(404).end();
+					return;
+				}
+				listener(req, res);
+			});
+
+			// Per-mode harness needs its own send() — temporarily override the port.
+			const originalPort = harness.port;
+			const originalServer = harness.server;
+			harness = { server: modeServer, port: modePort, bootstrap: modeBootstrap };
+			try {
+				const final = await runFullOidcFlow(new URL(RP1_ID).host);
+				expect(final.status).toBe(200);
+				expect(final.body).toContain("ID Token (decoded)");
+				expect(final.body).toContain(OP_ID);
+				expect(final.body).toContain(RP1_ID);
+				expect(final.body).toContain("alice@example.com");
+			} finally {
+				harness = { server: originalServer, port: originalPort, bootstrap: harness.bootstrap };
+				await new Promise<void>((resolve, reject) =>
+					modeServer.close((err) => (err ? reject(err) : resolve())),
+				);
+			}
+		}, 30_000);
+	}
 });
 
 describe("OP guards", () => {

@@ -121,6 +121,7 @@ describe("automaticRegistration (RP1 → OP)", () => {
 						token_endpoint_auth_method: "private_key_jwt",
 					},
 				},
+				requestDelivery: "query",
 			},
 			{
 				client_id: RP1_ID,
@@ -133,6 +134,8 @@ describe("automaticRegistration (RP1 → OP)", () => {
 		);
 
 		expect(result.requestObjectJwt).toBeTruthy();
+		expect(result.delivery).toBe("query");
+		if (result.delivery !== "query") return;
 		expect(result.authorizationUrl).toContain(`${OP_ID}/auth`);
 		expect(result.trustChain.trustAnchorId).toBe(TA_ID);
 		expect(result.trustChainExpiresAt).toBeGreaterThan(Math.floor(Date.now() / 1000));
@@ -175,6 +178,7 @@ describe("automaticRegistration (RP1 → OP)", () => {
 						token_endpoint_auth_method: "private_key_jwt",
 					},
 				},
+				requestDelivery: "query",
 			},
 			{
 				client_id: RP1_ID,
@@ -186,6 +190,8 @@ describe("automaticRegistration (RP1 → OP)", () => {
 			{ httpClient },
 		);
 
+		expect(result.delivery).toBe("query");
+		if (result.delivery !== "query") return;
 		const response = await httpClient(result.authorizationUrl);
 		// Federation validation must succeed (no 400 from processAutomaticRegistration);
 		// downstream node-oidc-provider may still return 4xx because dynamic-client
