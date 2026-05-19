@@ -3,6 +3,17 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- Apply stored theme before render to prevent flash of wrong theme. -->
+		<script>
+			(function () {
+				try {
+					var t = localStorage.getItem("fed-oidfed-theme");
+					if (t === "light" || t === "dark") {
+						document.documentElement.setAttribute("data-theme", t);
+					}
+				} catch (_) {}
+			})();
+		</script>
 		<title>fed-oidfed-com — OpenID Federation 1.0 demo deployment</title>
 		<meta
 			name="description"
@@ -41,8 +52,10 @@
 				--r-lg: 0.75rem;
 			}
 
+			/* Dark tokens — applied via system preference unless [data-theme="light"]
+			   is set, AND always applied when [data-theme="dark"] is set explicitly. */
 			@media (prefers-color-scheme: dark) {
-				:root {
+				:root:not([data-theme="light"]) {
 					--bg: #0b0d10;
 					--fg: #f4f4f5;
 					--muted: rgba(255, 255, 255, 0.04);
@@ -53,6 +66,17 @@
 					--brand-soft: rgba(77, 166, 255, 0.1);
 					--brand-fg: #0b0d10;
 				}
+			}
+			:root[data-theme="dark"] {
+				--bg: #0b0d10;
+				--fg: #f4f4f5;
+				--muted: rgba(255, 255, 255, 0.04);
+				--muted-fg: #a0a0a0;
+				--card: #11141a;
+				--border: rgba(255, 255, 255, 0.08);
+				--brand: var(--brand-300);
+				--brand-soft: rgba(77, 166, 255, 0.1);
+				--brand-fg: #0b0d10;
 			}
 
 			*,
@@ -176,6 +200,39 @@
 			.btn svg {
 				width: 13px;
 				height: 13px;
+			}
+
+			/* Theme toggle — icon-only, square, shows the icon for the OPPOSITE theme. */
+			.btn.theme {
+				padding: 0;
+				width: 2.25rem;
+				justify-content: center;
+			}
+			.btn.theme .ico-sun {
+				display: none;
+			}
+			.btn.theme .ico-moon {
+				display: inline-block;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) .btn.theme .ico-sun {
+					display: inline-block;
+				}
+				:root:not([data-theme="light"]) .btn.theme .ico-moon {
+					display: none;
+				}
+			}
+			:root[data-theme="dark"] .btn.theme .ico-sun {
+				display: inline-block;
+			}
+			:root[data-theme="dark"] .btn.theme .ico-moon {
+				display: none;
+			}
+			:root[data-theme="light"] .btn.theme .ico-sun {
+				display: none;
+			}
+			:root[data-theme="light"] .btn.theme .ico-moon {
+				display: inline-block;
 			}
 
 			/* ────── Section ────── */
@@ -491,6 +548,46 @@
 							/>
 						</svg>
 					</a>
+					<button
+						id="theme-toggle"
+						class="btn theme"
+						type="button"
+						aria-label="Toggle dark mode"
+						title="Toggle dark mode"
+					>
+						<svg
+							class="ico-moon"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+						</svg>
+						<svg
+							class="ico-sun"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<circle cx="12" cy="12" r="4" />
+							<line x1="12" y1="2" x2="12" y2="5" />
+							<line x1="12" y1="19" x2="12" y2="22" />
+							<line x1="2" y1="12" x2="5" y2="12" />
+							<line x1="19" y1="12" x2="22" y2="12" />
+							<line x1="4.93" y1="4.93" x2="7.05" y2="7.05" />
+							<line x1="16.95" y1="16.95" x2="19.07" y2="19.07" />
+							<line x1="4.93" y1="19.07" x2="7.05" y2="16.95" />
+							<line x1="16.95" y1="7.05" x2="19.07" y2="4.93" />
+						</svg>
+					</button>
 				</div>
 			</div>
 		</header>
@@ -522,26 +619,26 @@
 								<h4>Entities</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.single.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta.single.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta.single.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop.single.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop.single.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op.single.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.single.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp1.single.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span
 										><span>rp1.single.fed.oidfed.com (automatic)</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp2.single.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp2.single.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp2.single.fed.oidfed.com (explicit)</span></a
@@ -560,7 +657,7 @@
 								</div>
 								<a
 									class="try-link"
-									href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.single.fed.oidfed.com"
+									href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp1.single.fed.oidfed.com"
 									target="_blank"
 									rel="noopener noreferrer"
 									>Open in explorer →</a
@@ -582,43 +679,43 @@
 								<h4>Entities</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta.hier.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-edu.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia-edu.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span><span>ia-edu.hier.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-health.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia-health.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span><span>ia-health.hier.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-uni.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop-uni.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op-uni.hier.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-hospital.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop-hospital.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op-hospital.hier.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp1.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp1.hier.fed.oidfed.com (under edu)</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp2.hier.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp2.hier.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span
@@ -634,7 +731,7 @@
 								</div>
 								<a
 									class="try-link"
-									href="https://explore.oidfed.com/topology"
+									href="https://explore.oidfed.com/#/topology"
 									target="_blank"
 									rel="noopener noreferrer"
 									>Open the topology graph →</a
@@ -656,38 +753,38 @@
 								<h4>Entities</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-gov.multi.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta-gov.multi.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta-gov.multi.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-industry.multi.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta-industry.multi.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta-industry.multi.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia.multi.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia.multi.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span
 										><span>ia.multi.fed.oidfed.com (lists both TAs)</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop.multi.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop.multi.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op.multi.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp1.multi.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp1.multi.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp1.multi.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp2.multi.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp2.multi.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp2.multi.fed.oidfed.com</span></a
@@ -721,25 +818,25 @@
 								<h4>Federation X</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-x.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta-x.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta-x.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-x.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia-x.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span><span>ia-x.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-x.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop-x.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op-x.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp-x.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp-x.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp-x.xfed.fed.oidfed.com</span></a
@@ -748,31 +845,31 @@
 								<h4 style="margin-top: 0.75rem">Federation Y + bridge</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta-y.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta-y.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta-y.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-y.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia-y.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span><span>ia-y.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-y.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop-y.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op-y.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp-y.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp-y.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp-y.xfed.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fbridge.xfed.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fbridge.xfed.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span
@@ -808,27 +905,27 @@
 								<h4>Entities</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.constr.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta.constr.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta.constr.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-direct.constr.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop-direct.constr.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span
 										><span>op-direct.constr.fed.oidfed.com (resolves)</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia-deep.constr.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia-deep.constr.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span
 										><span>ia-deep.constr.fed.oidfed.com (would-be intermediate)</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop-deep.constr.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop-deep.constr.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span
@@ -864,26 +961,26 @@
 								<h4>Entities</h4>
 								<div class="entities">
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fta.policy.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fta.policy.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">TA</span><span>ta.policy.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fia.policy.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fia.policy.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">IA</span
 										><span>ia.policy.fed.oidfed.com (policy operators here)</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Fop.policy.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Fop.policy.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">OP</span><span>op.policy.fed.oidfed.com</span></a
 									>
 									<a
-										href="https://explore.oidfed.com/chain/https%3A%2F%2Frp.policy.fed.oidfed.com"
+										href="https://explore.oidfed.com/#/chain/https%3A%2F%2Frp.policy.fed.oidfed.com"
 										target="_blank"
 										rel="noopener noreferrer"
 										><span class="role">RP</span><span>rp.policy.fed.oidfed.com</span></a
@@ -898,7 +995,7 @@
 								</div>
 								<a
 									class="try-link"
-									href="https://explore.oidfed.com/policy"
+									href="https://explore.oidfed.com/#/policy"
 									target="_blank"
 									rel="noopener noreferrer"
 									>Open the policy simulator →</a
@@ -1012,5 +1109,23 @@
 				</div>
 			</div>
 		</footer>
+
+		<script>
+			(function () {
+				var btn = document.getElementById("theme-toggle");
+				if (!btn) return;
+				btn.addEventListener("click", function () {
+					var root = document.documentElement;
+					var current = root.getAttribute("data-theme");
+					var systemDark = matchMedia("(prefers-color-scheme: dark)").matches;
+					var effectiveDark = current === "dark" || (!current && systemDark);
+					var next = effectiveDark ? "light" : "dark";
+					root.setAttribute("data-theme", next);
+					try {
+						localStorage.setItem("fed-oidfed-theme", next);
+					} catch (_) {}
+				});
+			})();
+		</script>
 	</body>
 </html>
