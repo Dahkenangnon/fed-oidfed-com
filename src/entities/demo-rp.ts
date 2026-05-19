@@ -89,9 +89,6 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 		httpClient = fetch,
 	} = config;
 	const rpAuthorityHints = authorityHints.map((h) => toEntityId(h));
-	// Trust anchor entity IDs surfaced on the landing page so viewers can pull
-	// up the TA's Entity Configuration alongside the OP's and the RP's own.
-	const trustAnchorIds = Array.from(trustAnchors.keys()).map((k) => String(k));
 
 	const app = new Hono();
 	const leafHandler = leaf.handler();
@@ -128,7 +125,6 @@ export function createDemoRpHonoApp(config: DemoRpConfig): Hono {
 				opEntityId,
 				registrationMode,
 				requestDelivery,
-				trustAnchorIds,
 			}),
 		);
 	});
@@ -662,18 +658,11 @@ function renderLandingPage(opts: {
 	opEntityId: string;
 	registrationMode: "automatic" | "explicit";
 	requestDelivery: RequestDelivery;
-	trustAnchorIds: ReadonlyArray<string>;
 }): string {
 	const callout =
 		opts.registrationMode === "automatic"
 			? renderAutomaticCallout(opts.requestDelivery)
 			: renderExplicitCallout();
-	const taLinks = opts.trustAnchorIds
-		.map(
-			(ta) =>
-				`<li><a href="${htmlEscape(ta)}/.well-known/openid-federation"><code>${htmlEscape(ta)}</code></a></li>`,
-		)
-		.join("");
 	return `<!doctype html><html lang=en><head><meta charset=utf-8><title>${htmlEscape(opts.entityId)}</title></head>
 <body>
 <h1>${htmlEscape(opts.entityId)}</h1>
@@ -685,13 +674,7 @@ function renderLandingPage(opts: {
 <p>OP: <code>${htmlEscape(opts.opEntityId)}</code></p>
 <p><a href="/start-login"><strong>Sign in via OP →</strong></a></p>
 ${callout}
-<h2>Federation state</h2>
-<p><small>The OP has never been told about this RP. Inspect the live Entity Configurations to confirm — every signature in the trust chain is independent of OIDC.</small></p>
-<ul>
-<li><a href="/.well-known/openid-federation"><code>${htmlEscape(opts.entityId)}/.well-known/openid-federation</code></a> (this RP)</li>
-<li><a href="${htmlEscape(opts.opEntityId)}/.well-known/openid-federation"><code>${htmlEscape(opts.opEntityId)}/.well-known/openid-federation</code></a> (OP)</li>
-${taLinks}
-</ul>
+<p><small>Demo RP. <a href="/.well-known/openid-federation">Entity Configuration</a></small></p>
 </body></html>`;
 }
 
