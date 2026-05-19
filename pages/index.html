@@ -348,6 +348,40 @@
 				background: var(--brand-600);
 				color: #fff;
 			}
+			.quick-setup .alt {
+				border-top: 1px solid var(--border);
+				margin-top: 0.25rem;
+				padding-top: 0.5rem;
+			}
+			.quick-setup .alt summary {
+				cursor: pointer;
+				font-size: 12px;
+				color: var(--muted-fg);
+				list-style: none;
+				user-select: none;
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+			}
+			.quick-setup .alt summary::-webkit-details-marker {
+				display: none;
+			}
+			.quick-setup .alt summary::before {
+				content: "";
+				display: inline-block;
+				width: 0;
+				height: 0;
+				border-style: solid;
+				border-width: 4px 0 4px 6px;
+				border-color: transparent transparent transparent var(--muted-fg);
+				transition: transform 150ms ease;
+			}
+			.quick-setup .alt[open] summary::before {
+				transform: rotate(90deg);
+			}
+			.quick-setup .alt summary:hover {
+				color: var(--fg);
+			}
 
 			/* ────── Topology accordion (details/summary) ────── */
 			.topos {
@@ -725,11 +759,12 @@
 
 						<div class="quick-setup">
 							<div class="quick-setup-head">
-								<span class="label">Fastest setup · 30 seconds</span>
+								<span class="label">Quick setup · one click</span>
 								<a
 									class="btn download"
-									href="./explorer-settings.json"
-									download="oidfed-explorer-settings.json"
+									href="https://explore.oidfed.com/#/settings?import=https%3A%2F%2Fraw.githubusercontent.com%2FDahkenangnon%2Ffed-oidfed-com%2Fmain%2Fpages%2Fexplorer-settings.json"
+									target="_blank"
+									rel="noopener noreferrer"
 								>
 									<svg
 										width="13"
@@ -742,37 +777,57 @@
 										stroke-linejoin="round"
 										aria-hidden="true"
 									>
-										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-										<polyline points="7 10 12 15 17 10" />
-										<line x1="12" y1="15" x2="12" y2="3" />
+										<polyline points="9 11 12 14 22 4" />
+										<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
 									</svg>
-									Download settings JSON
+									Open explorer with anchors loaded
 								</a>
 							</div>
 							<ol>
 								<li>
-									Download
-									<a
-										href="./explorer-settings.json"
-										download="oidfed-explorer-settings.json"
-										><code>oidfed-explorer-settings.json</code></a
-									>
-									— ships with all 8 Trust Anchors for the demo.
-								</li>
-								<li>
-									Open
+									Click the button above — opens
 									<a
 										href="https://explore.oidfed.com/#/settings"
 										target="_blank"
 										rel="noopener noreferrer"
 										>explore.oidfed.com/#/settings</a
-									>.
+									>
+									and previews the 8 demo Trust Anchors.
 								</li>
 								<li>
-									Click <strong>Import</strong>, pick the downloaded file. Chain, topology, and
-									policy views work immediately.
+									Click <strong>Add 8 anchors</strong> in the preview card. Chain, topology, and
+									policy views work immediately — your other settings stay untouched.
 								</li>
 							</ol>
+
+							<details class="alt">
+								<summary>Or download and import manually (older explorer build)</summary>
+								<ol style="margin-top: 0.5rem">
+									<li>
+										Download
+										<a
+											href="./explorer-settings.json"
+											download="oidfed-explorer-settings.json"
+											><code>oidfed-explorer-settings.json</code></a
+										>
+										— ships with all 8 Trust Anchors for the demo.
+									</li>
+									<li>
+										Open
+										<a
+											href="https://explore.oidfed.com/#/settings"
+											target="_blank"
+											rel="noopener noreferrer"
+											>explore.oidfed.com/#/settings</a
+										>.
+									</li>
+									<li>
+										Click <strong>Import Settings</strong>, pick the downloaded file. Note:
+										this replaces existing settings; the one-click path above only adds the
+										anchors.
+									</li>
+								</ol>
+							</details>
 						</div>
 
 						<span style="font-size: 12.5px; color: var(--muted-fg)">
