@@ -24,7 +24,7 @@
     "@oidfed/authority": "^0.4.0",
     "@oidfed/core": "^0.4.0",
     "@oidfed/leaf": "^0.3.0",
-    "@oidfed/oidc": "^0.3.0",
+    "@oidfed/oidc": "^0.4.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "hono": "^4.6.14",
