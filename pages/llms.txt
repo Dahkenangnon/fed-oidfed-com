@@ -1,0 +1,39 @@
+# fed-oidfed-com
+
+> A live reference deployment of OpenID Federation 1.0 hosting six demonstration topologies under `*.fed.oidfed.com`. Built on the `@oidfed` packages (Apache-2.0): `core`, `authority`, `leaf`, and `oidc`. Each topology mirrors an entry in the upstream e2e test bed at `github.com/Dahkenangnon/oidfed/tree/main/tests/e2e/topologies/`. MIT-licensed reference implementation; demo signing keys, not for production identity assertions.
+
+OpenID Federation 1.0 establishes cryptographically verifiable trust between identity entities (Trust Anchors, Intermediate Authorities, OpenID Providers, Relying Parties) without bilateral configuration. Trust derives from signed entity statements that compose into trust chains terminating at a Trust Anchor. The published spec lives at `https://openid.net/specs/openid-federation-1_0.html`.
+
+## Topologies
+
+- [single-anchor](https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.single.fed.oidfed.com): 1 Trust Anchor (`ta.single.fed.oidfed.com`), 1 OpenID Provider (`op.single.fed.oidfed.com`), 2 Relying Parties (`rp1`/`rp2.single.fed.oidfed.com` — one configured for automatic registration, one for explicit). Aliases `single.fed.oidfed.com` and `minimal.fed.oidfed.com` resolve to the TA.
+- [hierarchical](https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.hier.fed.oidfed.com): Trust Anchor (`ta.hier.fed.oidfed.com`) with two Intermediate Authorities (`ia-edu`, `ia-health`), each holding a leaf OP and a leaf RP. Exercises multi-step trust chain resolution and per-branch policy.
+- [multi-anchor](https://explore.oidfed.com/#/entity/https%3A%2F%2Fta-gov.multi.fed.oidfed.com): Two Trust Anchors (`ta-gov`, `ta-industry`) above a shared Intermediate Authority (`ia.multi.fed.oidfed.com`). Tests trust-anchor intersection between Relying Party and OpenID Provider.
+- [cross-federation](https://explore.oidfed.com/#/entity/https%3A%2F%2Fta-x.xfed.fed.oidfed.com): Two independent federations (`ta-x` and `ta-y` roots) bridged by a dual-anchor entity `bridge.xfed.fed.oidfed.com` that lists both Trust Anchors in its `authority_hints`.
+- [constrained](https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.constr.fed.oidfed.com): Trust Anchor with constraint `max_path_length=0`. Direct subordinates (e.g. `op-direct.constr`) resolve; deeper chains via `ia-deep` → `op-deep` are rejected by design — useful for verifying constraint enforcement.
+- [policy-operators](https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.policy.fed.oidfed.com): Intermediate Authority exercising every metadata policy operator: `subset_of`, `value`, `add`, `essential`. Demonstrates how policies cascade through a trust chain.
+
+## How to inspect
+
+- [Browser explorer](https://explore.oidfed.com/): OidFed Explorer — paste an entity URL on the home page or navigate directly to `/#/entity/<id>` or `/#/chain/<id>`. Chain and topology views require Trust Anchors configured at `/#/settings`. A one-click import link is available on the fed-oidfed-com page.
+- [Settings JSON](https://fed.oidfed.com/explorer-settings.json): Pre-configured explorer settings with all 8 Trust Anchors for the demo. Import via the explorer's `/#/settings` page (Import button) or use the `?import=<url>` query parameter to load it automatically.
+- [@oidfed/cli](https://www.npmjs.com/package/@oidfed/cli): Terminal CLI. `oidfed entity <id>` fetches an entity configuration. `oidfed chain <child-id> --trust-anchor <ta-id>` resolves and validates a trust chain. `oidfed health <id>` checks the federation endpoint surface.
+
+## Concepts
+
+- **Trust Anchor (TA)**: The root of trust in a federation. Publishes its own Entity Configuration plus a JWKS used to verify the chain. Resolvers must be configured with TAs they consider authoritative; a chain is valid only if it terminates at one.
+- **Intermediate Authority (IA)**: Sits between Trust Anchors and leaf entities. Issues signed Subordinate Statements about its children, can apply Metadata Policy and Constraints. A chain may include 0..N intermediates.
+- **Leaf entity**: An OpenID Provider (`openid_provider` metadata) or Relying Party (`openid_relying_party` metadata) at the edge of the federation. Holds `authority_hints` pointing upward to its parents.
+- **Entity Configuration**: A self-signed JWT served at `/.well-known/openid-federation` describing an entity's metadata, signing keys, and authority hints.
+- **Subordinate Statement**: A signed JWT issued by a parent about a child entity, fetched from the parent's `federation_fetch_endpoint`. Carries the child's keys, scoped metadata, and any policy/constraints.
+- **Trust Chain**: An ordered sequence of Entity Statements starting at a leaf entity and ending at a Trust Anchor. Validation includes signature verification at each link, time bounds, and constraint enforcement.
+- **Metadata Policy**: Operators like `subset_of`, `value`, `add`, `essential` that a higher authority applies to a subordinate's metadata. The policy-operators topology demonstrates each.
+- **Trust Marks**: Signed assertions of conformance issued by trusted authorities. The single-anchor topology configures a "certified" trust-mark issuer for demonstration purposes.
+- **Automatic Registration (RP-side)**: The Relying Party makes an Authentication Request signed with its own key; the OpenID Provider discovers the RP's trust chain on the fly. No prior registration step.
+- **Explicit Registration**: The Relying Party POSTs its signed Entity Configuration to the OP's `federation_registration_endpoint`; the OP provisions a client and returns resolved metadata.
+
+## Source
+
+- [github.com/Dahkenangnon/fed-oidfed-com](https://github.com/Dahkenangnon/fed-oidfed-com) — this deployment, MIT-licensed.
+- [github.com/Dahkenangnon/oidfed](https://github.com/Dahkenangnon/oidfed) — the `@oidfed/*` packages this deployment composes, Apache-2.0.
+- [OpenID Federation 1.0 specification](https://openid.net/specs/openid-federation-1_0.html) — published by the OpenID Foundation.

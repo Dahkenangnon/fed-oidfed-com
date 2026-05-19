@@ -14,15 +14,240 @@
 				} catch (_) {}
 			})();
 		</script>
-		<title>fed-oidfed-com — OpenID Federation 1.0 demo deployment</title>
+		<title>fed-oidfed-com — six live OpenID Federation 1.0 topologies</title>
 		<meta
 			name="description"
-			content="Six OpenID Federation 1.0 topologies deployed under *.fed.oidfed.com — single-anchor, hierarchical, multi-anchor, cross-federation, constrained, and policy-operators. Inspect them with explore.oidfed.com or the @oidfed/cli."
+			content="Live reference deployment of OpenID Federation 1.0: six topologies (single-anchor, hierarchical, multi-anchor, cross-federation, constrained, policy-operators) running at *.fed.oidfed.com. Inspect trust chains and entity configurations with explore.oidfed.com or @oidfed/cli."
 		/>
+		<meta
+			name="keywords"
+			content="OpenID Federation, OpenID Federation 1.0, OIDC Federation, Trust Anchor, Trust Chain, Entity Configuration, Subordinate Statement, Metadata Policy, Trust Marks, OAuth 2.0, federation topology, federation explorer, automatic client registration, explicit client registration, @oidfed"
+		/>
+		<meta name="author" content="Justin Dah-Kenangnon" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+		<meta name="googlebot" content="index, follow" />
+		<meta name="generator" content="static html" />
+		<meta name="color-scheme" content="light dark" />
+		<meta name="theme-color" content="#007acc" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)" />
+		<meta name="application-name" content="fed-oidfed-com" />
+		<meta name="apple-mobile-web-app-title" content="fed-oidfed-com" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="format-detection" content="telephone=no" />
+
+		<link rel="canonical" href="https://fed.oidfed.com/" />
+		<link rel="alternate" hreflang="en" href="https://fed.oidfed.com/" />
+		<link rel="alternate" hreflang="x-default" href="https://fed.oidfed.com/" />
+
+		<!-- Open Graph — used by Facebook, LinkedIn, Slack, Discord, etc. -->
+		<meta property="og:site_name" content="fed-oidfed-com" />
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:url" content="https://fed.oidfed.com/" />
+		<meta
+			property="og:title"
+			content="fed-oidfed-com — six live OpenID Federation 1.0 topologies"
+		/>
+		<meta
+			property="og:description"
+			content="Live reference deployment of OpenID Federation 1.0 — six topologies (single-anchor, hierarchical, multi-anchor, cross-federation, constrained, policy-operators) inspectable with explore.oidfed.com or @oidfed/cli."
+		/>
+		<meta property="og:image" content="https://fed.oidfed.com/og-image.svg" />
+		<meta property="og:image:type" content="image/svg+xml" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="fed-oidfed-com: a Trust Anchor at the root resolves down through Intermediate Authorities to leaf OPs and RPs across six federation topologies." />
+
+		<!-- Twitter Cards — also used by Mastodon, Bluesky, X. -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="fed-oidfed-com — six live OpenID Federation 1.0 topologies" />
+		<meta
+			name="twitter:description"
+			content="Live reference deployment of OpenID Federation 1.0 — single-anchor, hierarchical, multi-anchor, cross-federation, constrained, policy-operators. Inspect with explore.oidfed.com or @oidfed/cli."
+		/>
+		<meta name="twitter:image" content="https://fed.oidfed.com/og-image.svg" />
+		<meta name="twitter:image:alt" content="OpenID Federation 1.0 trust chain — six demo topologies" />
+
 		<link
 			rel="icon"
 			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23007acc'/%3E%3C/svg%3E"
 		/>
+		<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ffffff'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%23007acc'/%3E%3C/svg%3E" />
+
+		<!-- Schema.org structured data — drives Google rich results, Bing reasoning,
+		     and LLM grounding (ChatGPT Search, Perplexity, Claude Web Search, etc.). -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "WebSite",
+			"@id": "https://fed.oidfed.com/#website",
+			"name": "fed-oidfed-com",
+			"url": "https://fed.oidfed.com/",
+			"description": "Live reference deployment of OpenID Federation 1.0 — six federation topologies built on the @oidfed packages.",
+			"inLanguage": "en",
+			"publisher": { "@id": "https://oidfed.com/#org" }
+		}
+		</script>
+
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "Organization",
+			"@id": "https://oidfed.com/#org",
+			"name": "@oidfed",
+			"url": "https://oidfed.com/",
+			"sameAs": [
+				"https://github.com/Dahkenangnon/oidfed",
+				"https://www.npmjs.com/org/oidfed"
+			]
+		}
+		</script>
+
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "SoftwareSourceCode",
+			"name": "fed-oidfed-com",
+			"description": "Reference implementation of OpenID Federation 1.0 — six federation topologies built on @oidfed/core, @oidfed/authority, @oidfed/leaf, and @oidfed/oidc.",
+			"url": "https://fed.oidfed.com/",
+			"codeRepository": "https://github.com/Dahkenangnon/fed-oidfed-com",
+			"programmingLanguage": ["TypeScript", "JavaScript"],
+			"runtimePlatform": "Node.js 22+",
+			"license": "https://opensource.org/licenses/MIT",
+			"author": {
+				"@type": "Person",
+				"name": "Justin Dah-Kenangnon",
+				"url": "https://github.com/Dahkenangnon"
+			},
+			"about": [
+				{
+					"@type": "Thing",
+					"name": "OpenID Federation 1.0",
+					"url": "https://openid.net/specs/openid-federation-1_0.html"
+				},
+				{
+					"@type": "Thing",
+					"name": "OAuth 2.0",
+					"url": "https://datatracker.ietf.org/doc/html/rfc6749"
+				}
+			],
+			"applicationCategory": "DeveloperApplication",
+			"applicationSubCategory": "Identity and Federation Tooling"
+		}
+		</script>
+
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "ItemList",
+			"name": "OpenID Federation 1.0 demo topologies at *.fed.oidfed.com",
+			"numberOfItems": 6,
+			"itemListOrder": "ItemListOrderAscending",
+			"itemListElement": [
+				{
+					"@type": "ListItem",
+					"position": 1,
+					"name": "single-anchor",
+					"description": "One Trust Anchor, one OpenID Provider, two Relying Parties (one configured for automatic registration, one for explicit). Minimal complete federation.",
+					"url": "https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.single.fed.oidfed.com"
+				},
+				{
+					"@type": "ListItem",
+					"position": 2,
+					"name": "hierarchical",
+					"description": "Trust Anchor with two Intermediate Authorities (edu and health), each holding a leaf OpenID Provider and a leaf Relying Party. Exercises multi-step trust chains.",
+					"url": "https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.hier.fed.oidfed.com"
+				},
+				{
+					"@type": "ListItem",
+					"position": 3,
+					"name": "multi-anchor",
+					"description": "Two Trust Anchors (governmental, industrial) above a shared Intermediate Authority. Tests trust-anchor intersection between Relying Party and OpenID Provider.",
+					"url": "https://explore.oidfed.com/#/entity/https%3A%2F%2Fta-gov.multi.fed.oidfed.com"
+				},
+				{
+					"@type": "ListItem",
+					"position": 4,
+					"name": "cross-federation",
+					"description": "Two independent federations bridged by a dual-anchor entity that lists both Trust Anchors in its authority_hints.",
+					"url": "https://explore.oidfed.com/#/entity/https%3A%2F%2Fta-x.xfed.fed.oidfed.com"
+				},
+				{
+					"@type": "ListItem",
+					"position": 5,
+					"name": "constrained",
+					"description": "Trust Anchor with constraint max_path_length=0. Direct subordinates resolve; deeper chains are rejected by design.",
+					"url": "https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.constr.fed.oidfed.com"
+				},
+				{
+					"@type": "ListItem",
+					"position": 6,
+					"name": "policy-operators",
+					"description": "Intermediate Authority exercising every metadata policy operator — subset_of, value, add, essential — as defined in OpenID Federation 1.0.",
+					"url": "https://explore.oidfed.com/#/entity/https%3A%2F%2Fta.policy.fed.oidfed.com"
+				}
+			]
+		}
+		</script>
+
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "FAQPage",
+			"mainEntity": [
+				{
+					"@type": "Question",
+					"name": "What is fed-oidfed-com?",
+					"acceptedAnswer": {
+						"@type": "Answer",
+						"text": "fed-oidfed-com is a live reference deployment of OpenID Federation 1.0 hosting six demonstration topologies under *.fed.oidfed.com. Each topology shows a distinct federation shape — from a minimal single-anchor setup to a constrained anchor and a cross-federation bridge — using the @oidfed packages (core, authority, leaf, oidc) as the implementation."
+					}
+				},
+				{
+					"@type": "Question",
+					"name": "How do I inspect a trust chain in this federation?",
+					"acceptedAnswer": {
+						"@type": "Answer",
+						"text": "Two surfaces: explore.oidfed.com (browser-based, visual) and @oidfed/cli (terminal, scriptable). For the explorer, the chain and topology views need the demo's Trust Anchors loaded once at /#/settings — a one-click import URL is offered on this page. For the CLI, run `oidfed chain <entityId> --trust-anchor <ta>`."
+					}
+				},
+				{
+					"@type": "Question",
+					"name": "Why does the OpenID Federation Explorer need trust anchors configured before chain resolution works?",
+					"acceptedAnswer": {
+						"@type": "Answer",
+						"text": "OpenID Federation 1.0 requires the resolver to know which Trust Anchors it considers authoritative before it can validate a trust chain. The explorer therefore needs at least one Trust Anchor with a JWKS configured at /#/settings. Entity Inspector views work without any configuration because they only fetch a single signed Entity Configuration."
+					}
+				},
+				{
+					"@type": "Question",
+					"name": "What is the difference between automatic and explicit OIDC client registration in OpenID Federation?",
+					"acceptedAnswer": {
+						"@type": "Answer",
+						"text": "Automatic Registration lets a Relying Party make Authentication Requests without prior registration: the OP discovers the RP via its Entity Identifier and trust chain on the fly. Explicit Registration is a dedicated POST of the RP's Entity Configuration (or full Trust Chain) to the OP's federation_registration_endpoint, after which the OP provisions a client and returns the resolved metadata. The single-anchor demo topology runs one RP in each mode (rp1 automatic, rp2 explicit)."
+					}
+				},
+				{
+					"@type": "Question",
+					"name": "What are the six federation topologies served by this deployment?",
+					"acceptedAnswer": {
+						"@type": "Answer",
+						"text": "single-anchor (1 TA, 1 OP, 2 RPs), hierarchical (TA → 2 Intermediates → leaves), multi-anchor (2 TAs → shared Intermediate → leaves), cross-federation (two federations bridged by a dual-anchor entity), constrained (TA with max_path_length=0), and policy-operators (IA exercising subset_of / value / add / essential). Each is a direct mirror of the corresponding entry in oidfed/tests/e2e/topologies/."
+					}
+				},
+				{
+					"@type": "Question",
+					"name": "Is the source code for fed-oidfed-com open?",
+					"acceptedAnswer": {
+						"@type": "Answer",
+						"text": "Yes — MIT-licensed at github.com/Dahkenangnon/fed-oidfed-com. The four @oidfed packages it composes are Apache-2.0-licensed at github.com/Dahkenangnon/oidfed."
+					}
+				}
+			]
+		}
+		</script>
+
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -124,6 +349,22 @@
 				max-width: 56rem;
 				margin: 0 auto;
 				padding: 0 1.5rem;
+			}
+
+			/* Skip-to-main link — visible only when focused (keyboard / screen-reader users). */
+			.skip-link {
+				position: absolute;
+				left: -9999px;
+				top: 0;
+				padding: 0.5rem 0.875rem;
+				background: var(--brand);
+				color: var(--brand-fg);
+				font-weight: 500;
+				border-radius: 0 0 var(--r) 0;
+				z-index: 100;
+			}
+			.skip-link:focus {
+				left: 0;
 			}
 
 			/* ────── Header ────── */
@@ -647,9 +888,10 @@
 		</style>
 	</head>
 	<body>
-		<header class="top">
+		<a class="skip-link" href="#main">Skip to content</a>
+		<header class="top" role="banner">
 			<div class="wrap">
-				<span class="eyebrow">Demo federation · Live</span>
+				<span class="eyebrow" aria-hidden="true">Demo federation · Live</span>
 				<h1>Six OpenID Federation 1.0 topologies, deployed.</h1>
 				<p class="lede">
 					Reference deployment of
@@ -659,7 +901,7 @@
 					<a href="https://explore.oidfed.com">explore.oidfed.com</a> or the
 					<a href="https://www.npmjs.com/package/@oidfed/cli">@oidfed/cli</a>.
 				</p>
-				<div class="cta">
+				<nav class="cta" aria-label="Primary actions">
 					<a class="btn primary" href="#topologies">See the topologies</a>
 					<a class="btn" href="#inspect">How to inspect</a>
 					<a
@@ -715,18 +957,20 @@
 							<line x1="16.95" y1="7.05" x2="19.07" y2="4.93" />
 						</svg>
 					</button>
-				</div>
+				</nav>
 			</div>
 		</header>
 
-		<section id="topologies">
+		<main id="main">
+
+		<section id="topologies" aria-labelledby="topologies-heading">
 			<div class="wrap">
 				<span class="sec-label">
 					<span class="num">§02</span>
 					<span class="rule"></span>
 					<span>Topologies</span>
 				</span>
-				<h2>Pick a federation. Expand for its entities and a one-liner to try.</h2>
+				<h2 id="topologies-heading">Pick a federation. Expand for its entities and a one-liner to try.</h2>
 				<p class="sec-lede">
 					Each topology lists its entities by role. Clicking an entity opens it in the explorer's
 					Entity Inspector — this works out of the box. Chain, topology, and policy views need a
@@ -1292,14 +1536,14 @@
 			</div>
 		</section>
 
-		<section id="inspect">
+		<section id="inspect" aria-labelledby="inspect-heading">
 			<div class="wrap">
 				<span class="sec-label">
 					<span class="num">§03</span>
 					<span class="rule"></span>
 					<span>How to inspect</span>
 				</span>
-				<h2>Two surfaces. Same federation underneath.</h2>
+				<h2 id="inspect-heading">Two surfaces. Same federation underneath.</h2>
 				<p class="sec-lede">
 					The explorer is browser-based and visual; the CLI is a single binary that prints
 					machine-readable trees, tables, and JWTs. Pick whichever matches your task.
@@ -1372,10 +1616,12 @@
 			</div>
 		</section>
 
-		<footer>
+		</main>
+
+		<footer role="contentinfo">
 			<div class="wrap row">
 				<span>fed-oidfed-com · MIT · OpenID Federation 1.0 reference deployment</span>
-				<div class="links">
+				<nav class="links" aria-label="Footer links">
 					<a
 						href="https://github.com/Dahkenangnon/fed-oidfed-com"
 						target="_blank"
@@ -1398,7 +1644,7 @@
 						rel="noopener noreferrer"
 						>OIDF spec</a
 					>
-				</div>
+				</nav>
 			</div>
 		</footer>
 
