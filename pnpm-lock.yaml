@@ -35,6 +35,9 @@ importers:
       hono:
         specifier: ^4.6.14
         version: 4.12.19
+      jose:
+        specifier: ^6.2.0
+        version: 6.2.3
       oidc-provider:
         specifier: ^9.0.0
         version: 9.8.3
