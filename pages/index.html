@@ -278,8 +278,8 @@
 				display: flex;
 				gap: 0.75rem;
 				align-items: flex-start;
-				padding: 0.875rem 1rem;
-				margin: 0 0 1.25rem;
+				padding: 1rem 1.125rem;
+				margin: 0 0 1.5rem;
 				border: 1px solid rgba(0, 122, 204, 0.3);
 				background: var(--brand-soft);
 				border-radius: var(--r-lg);
@@ -287,13 +287,66 @@
 				color: var(--fg);
 				line-height: 1.55;
 			}
-			.callout svg {
+			.callout > svg {
 				flex-shrink: 0;
 				color: var(--brand);
 				margin-top: 0.15rem;
 			}
 			.callout strong {
 				font-weight: 600;
+			}
+			.callout-body {
+				display: flex;
+				flex-direction: column;
+				gap: 0.875rem;
+				flex: 1;
+				min-width: 0;
+			}
+			.quick-setup {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+				padding: 0.75rem 0.875rem;
+				background: var(--card);
+				border: 1px solid var(--border);
+				border-radius: var(--r);
+			}
+			.quick-setup-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+			}
+			.quick-setup-head .label {
+				font-family: var(--font-mono);
+				font-size: 10px;
+				text-transform: uppercase;
+				letter-spacing: 0.16em;
+				color: var(--muted-fg);
+				font-weight: 600;
+			}
+			.quick-setup ol {
+				margin: 0;
+				padding-left: 1.25rem;
+				font-size: 12.5px;
+				color: var(--muted-fg);
+				line-height: 1.6;
+			}
+			.quick-setup ol li::marker {
+				color: var(--brand);
+				font-weight: 600;
+			}
+			.btn.download {
+				background: var(--brand);
+				color: var(--brand-fg);
+				border-color: transparent;
+				height: 2rem;
+				font-size: 12.5px;
+			}
+			.btn.download:hover {
+				background: var(--brand-600);
+				color: #fff;
 			}
 
 			/* ────── Topology accordion (details/summary) ────── */
@@ -663,14 +716,70 @@
 							d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
 						/>
 					</svg>
-					<span>
-						<strong>Before chain views work:</strong> the explorer needs at least one Trust Anchor
-						configured at
-						<a href="https://explore.oidfed.com/#/settings" target="_blank" rel="noopener noreferrer"
-							>/#/settings</a
-						>. Each topology below shows the exact URL(s) to paste into the Trust Anchors list.
-						Entity inspection (entity links below) works without any setup.
-					</span>
+					<div class="callout-body">
+						<span>
+							<strong>Before chain / topology / policy views work:</strong> the explorer needs the
+							demo's Trust Anchors loaded into its settings (entity inspection links work without
+							any setup).
+						</span>
+
+						<div class="quick-setup">
+							<div class="quick-setup-head">
+								<span class="label">Fastest setup · 30 seconds</span>
+								<a
+									class="btn download"
+									href="./explorer-settings.json"
+									download="oidfed-explorer-settings.json"
+								>
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+									>
+										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+										<polyline points="7 10 12 15 17 10" />
+										<line x1="12" y1="15" x2="12" y2="3" />
+									</svg>
+									Download settings JSON
+								</a>
+							</div>
+							<ol>
+								<li>
+									Download
+									<a
+										href="./explorer-settings.json"
+										download="oidfed-explorer-settings.json"
+										><code>oidfed-explorer-settings.json</code></a
+									>
+									— ships with all 8 Trust Anchors for the demo.
+								</li>
+								<li>
+									Open
+									<a
+										href="https://explore.oidfed.com/#/settings"
+										target="_blank"
+										rel="noopener noreferrer"
+										>explore.oidfed.com/#/settings</a
+									>.
+								</li>
+								<li>
+									Click <strong>Import</strong>, pick the downloaded file. Chain, topology, and
+									policy views work immediately.
+								</li>
+							</ol>
+						</div>
+
+						<span style="font-size: 12.5px; color: var(--muted-fg)">
+							Prefer manual setup? Each topology accordion below lists its anchor URL(s) to
+							paste into the Trust Anchors list one at a time.
+						</span>
+					</div>
 				</div>
 
 				<div class="topos">

@@ -1,0 +1,17 @@
+{
+  "trustAnchors": [
+    { "entityId": "https://ta.single.fed.oidfed.com" },
+    { "entityId": "https://ta.hier.fed.oidfed.com" },
+    { "entityId": "https://ta-gov.multi.fed.oidfed.com" },
+    { "entityId": "https://ta-industry.multi.fed.oidfed.com" },
+    { "entityId": "https://ta-x.xfed.fed.oidfed.com" },
+    { "entityId": "https://ta-y.xfed.fed.oidfed.com" },
+    { "entityId": "https://ta.constr.fed.oidfed.com" },
+    { "entityId": "https://ta.policy.fed.oidfed.com" }
+  ],
+  "httpTimeoutMs": 10000,
+  "maxChainDepth": 10,
+  "theme": "system",
+  "jsonIndent": 2,
+  "expirationWarningDays": [7, 30, 90]
+}
