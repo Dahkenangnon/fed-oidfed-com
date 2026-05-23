@@ -54,6 +54,7 @@ export const policyOperatorsTopology: TopologyDefinition = {
 					issuer: OP,
 					authorization_endpoint: `${OP}/auth`,
 					token_endpoint: `${OP}/token`,
+					userinfo_endpoint: `${OP}/me`,
 					pushed_authorization_request_endpoint: `${OP}/request`,
 					federation_registration_endpoint: `${OP}/federation_registration`,
 					jwks_uri: `${OP}/jwks`,
@@ -66,8 +67,8 @@ export const policyOperatorsTopology: TopologyDefinition = {
 					// Intentionally weaker here; the IA's metadata_policy `value` operator
 					// forces private_key_jwt during chain resolution.
 					token_endpoint_auth_methods_supported: ["client_secret_basic"],
-					token_endpoint_auth_signing_alg_values_supported: ["ES256"],
-					request_object_signing_alg_values_supported: ["ES256"],
+					token_endpoint_auth_signing_alg_values_supported: ["ES256", "RS256"],
+					request_object_signing_alg_values_supported: ["ES256", "RS256"],
 					client_registration_types_supported: ["automatic", "explicit"],
 					scopes_supported: ["openid", "profile", "email"],
 					claims_supported: ["sub", "name", "preferred_username", "email", "email_verified"],
