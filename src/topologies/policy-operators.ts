@@ -50,19 +50,27 @@ export const policyOperatorsTopology: TopologyDefinition = {
 			protocolRole: "op",
 			authorityHints: [IA],
 			metadata: {
-				federation_entity: {
-					federation_registration_endpoint: `${OP}/federation_registration`,
-				},
 				openid_provider: {
 					issuer: OP,
 					authorization_endpoint: `${OP}/auth`,
 					token_endpoint: `${OP}/token`,
+					pushed_authorization_request_endpoint: `${OP}/request`,
+					federation_registration_endpoint: `${OP}/federation_registration`,
+					jwks_uri: `${OP}/jwks`,
 					response_types_supported: ["code"],
+					// Intentionally single-alg here; the IA's metadata_policy `add` operator
+					// extends this to include ES256 during chain resolution.
+					id_token_signing_alg_values_supported: ["RS256"],
 					grant_types_supported: ["authorization_code"],
 					subject_types_supported: ["public"],
-					id_token_signing_alg_values_supported: ["RS256"],
+					// Intentionally weaker here; the IA's metadata_policy `value` operator
+					// forces private_key_jwt during chain resolution.
 					token_endpoint_auth_methods_supported: ["client_secret_basic"],
-					client_registration_types_supported: ["automatic"],
+					token_endpoint_auth_signing_alg_values_supported: ["ES256"],
+					request_object_signing_alg_values_supported: ["ES256"],
+					client_registration_types_supported: ["automatic", "explicit"],
+					scopes_supported: ["openid", "profile", "email"],
+					claims_supported: ["sub", "name", "preferred_username", "email", "email_verified"],
 				},
 			},
 		},

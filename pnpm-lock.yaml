@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@oidfed/core': ^0.4.0
+  '@oidfed/core': ^0.5.0
 
 importers:
 
@@ -15,17 +15,17 @@ importers:
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.19)
       '@oidfed/authority':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0(@oidfed/core@0.5.0)
       '@oidfed/core':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@oidfed/leaf':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.5.0
+        version: 0.5.0(@oidfed/core@0.5.0)
       '@oidfed/oidc':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0(@oidfed/core@0.5.0)
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -460,17 +460,23 @@ packages:
     peerDependencies:
       koa: ^2.0.0 || ^3.0.0
 
-  '@oidfed/authority@0.4.0':
-    resolution: {integrity: sha512-HL5etD7XIUpRnqLU86oqEbUFDaCiTs4+bHVPuKlDNmMxlE9zhucKZVsMi84hQ3pp4cLNyRTGaYhl31dI0KI+OA==}
+  '@oidfed/authority@0.5.0':
+    resolution: {integrity: sha512-nuGAQ4kC/oTQ1oVtfJsEAHVMcJlsfPllsnBSm6MMSWSUo7zBmugAu4KbPgGixCiDFNvONl9dV4JmXBeo90DamQ==}
+    peerDependencies:
+      '@oidfed/core': ^0.5.0
 
-  '@oidfed/core@0.4.0':
-    resolution: {integrity: sha512-jHGEo2IrAOs/IGDHvjixQ6bsGZGHCLNm0su67rFDHQkpIaQ6/0b+Tr4GNER/XC4UOWuHH3MJ/dqueNxZlMd5xQ==}
+  '@oidfed/core@0.5.0':
+    resolution: {integrity: sha512-qpGiIh0evyExgwt5F0VrC0V+AC2GKo2I10Kg193kE1sVOCXtJUhQ30ZaKlLpniv5BqgUa57Kwv0TAQAi3ogYJA==}
 
-  '@oidfed/leaf@0.3.0':
-    resolution: {integrity: sha512-n/EhFla7fhxYZY0MOMsl1sGgn0snpKb36o7+6984UuI00xZvKGlW6ooWui+jy0GfTeYZbLc+g16eTNarYwO3xg==}
+  '@oidfed/leaf@0.5.0':
+    resolution: {integrity: sha512-pgELtbqNVZO8QgS98o8pBxiEFoP220bYBOmMTZ8/EwldEZNXY2zjQ6L6V3NPzEb0+RhhUcsbc6M4ZR2gQOBT+Q==}
+    peerDependencies:
+      '@oidfed/core': ^0.5.0
 
-  '@oidfed/oidc@0.4.0':
-    resolution: {integrity: sha512-gD5itBrMgXXr9u2Lfwna4QeGg9viVoQEUgvSgSKsPLLryV19/BYDLLToAnOZnmQv6dNybNNvgGZvYeqJGMtp0g==}
+  '@oidfed/oidc@0.5.0':
+    resolution: {integrity: sha512-T+79Go7r5AKNxfWqegt5+dvrHJA+V6D5TXvJWle8s1HXMqbAwanuvnmxd8j4HfNbTH3jWTfl0tSzCFAN5IgEPA==}
+    peerDependencies:
+      '@oidfed/core': ^0.5.0
 
   '@rollup/rollup-android-arm-eabi@4.60.4':
     resolution: {integrity: sha512-F5QXMSiFebS9hKZj02XhWLLnRpJ3B3AROP0tWbFBSj+6kCbg5m9j5JoHKd4mmSVy5mS/IMQloYgYxCuJC0fxEQ==}
@@ -1529,22 +1535,22 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@oidfed/authority@0.4.0':
+  '@oidfed/authority@0.5.0(@oidfed/core@0.5.0)':
     dependencies:
-      '@oidfed/core': 0.4.0
+      '@oidfed/core': 0.5.0
 
-  '@oidfed/core@0.4.0':
+  '@oidfed/core@0.5.0':
     dependencies:
       jose: 6.2.3
       zod: 4.4.3
 
-  '@oidfed/leaf@0.3.0':
+  '@oidfed/leaf@0.5.0(@oidfed/core@0.5.0)':
     dependencies:
-      '@oidfed/core': 0.4.0
+      '@oidfed/core': 0.5.0
 
-  '@oidfed/oidc@0.4.0':
+  '@oidfed/oidc@0.5.0(@oidfed/core@0.5.0)':
     dependencies:
-      '@oidfed/core': 0.4.0
+      '@oidfed/core': 0.5.0
       zod: 4.4.3
 
   '@rollup/rollup-android-arm-eabi@4.60.4':

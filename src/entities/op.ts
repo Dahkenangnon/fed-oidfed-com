@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import type { AuthorityServer } from "@oidfed/authority";
 import {
 	type EntityId,
 	type HttpClient,
@@ -8,13 +7,21 @@ import {
 	type TrustAnchorSet,
 	decodeEntityStatement,
 } from "@oidfed/core";
-import { processAutomaticRegistration } from "@oidfed/oidc";
+import { type LeafEntity, createLeafHandler } from "@oidfed/leaf";
+import { createExplicitRegistrationHandler, processAutomaticRegistration } from "@oidfed/oidc";
 import cors from "cors";
 import express, { type Express, type RequestHandler } from "express";
 import Provider from "oidc-provider";
 
 export interface OpExpressAppConfig {
-	authority: AuthorityServer;
+	/**
+	 * Leaf entity backing the OP's `.well-known/openid-federation` endpoint.
+	 * This factory targets the leaf-role OP case used in the demo topologies.
+	 * An OP that plays the intermediate or trust-anchor role MUST be built from
+	 * `@oidfed/authority` instead, with `@oidfed/oidc` mounted alongside for the
+	 * OIDC surface — not from this factory.
+	 */
+	leaf: LeafEntity;
 	entityId: string;
 	trustAnchors: TrustAnchorSet;
 	/**
@@ -47,15 +54,17 @@ export interface OpExpressAppConfig {
 }
 
 /**
- * Express factory for a leaf OP — mounts the federation endpoint surface alongside a
- * `node-oidc-provider` instance, plus custom interactions (login + consent) and the
- * federation-to-provider client adapter that makes federation-registered clients
- * addressable to the provider at /auth and /token.
+ * Express factory for a leaf-role OP — mounts the federation leaf surface
+ * (Entity Configuration only) and the OIDC explicit-registration endpoint
+ * alongside a `node-oidc-provider` instance, plus custom interactions
+ * (login + consent) and the federation-to-provider client adapter that makes
+ * federation-registered clients addressable to the provider at /auth and /token.
  *
- * Stays on Express because `node-oidc-provider` is Node-only (depends on Node streams
- * and koa-compose). The federation endpoint subset (federation_fetch, federation_list,
- * federation_resolve, federation_registration, federation_trust_mark*) is mounted via
- * the upstream `authority.handler()`.
+ * Stays on Express because `node-oidc-provider` is Node-only (depends on Node
+ * streams and koa-compose). Federation surface is built from `@oidfed/leaf`'s
+ * `createLeafHandler` and `@oidfed/oidc`'s `createExplicitRegistrationHandler`
+ * — no `@oidfed/authority` involvement, since this factory targets the
+ * leaf-role OP case.
  *
  * Two OIDC integration points:
  *
@@ -66,8 +75,8 @@ export interface OpExpressAppConfig {
  *     On failure, the canonical OIDC error JSON is returned to the user-agent (never
  *     redirected to the RP — federation trust failures must not leak to redirect_uri).
  *
- *   • `/federation_registration` is forwarded to `authority.handler()`. The response
- *     is intercepted to capture the OP-assigned `client_id` (and optional
+ *   • `/federation_registration` runs the OIDC explicit-registration handler. The
+ *     response is intercepted to capture the OP-assigned `client_id` (and optional
  *     `client_secret`) and register the client with the provider's adapter, so the
  *     subsequent OIDC flow can authenticate the RP.
  *
@@ -78,7 +87,7 @@ export interface OpExpressAppConfig {
  */
 export function createOpExpressApp(config: OpExpressAppConfig): Express {
 	const {
-		authority,
+		leaf,
 		entityId,
 		trustAnchors,
 		signingKey,
@@ -88,8 +97,9 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 	} = config;
 
 	// OIDC ID-Token signing JWKS: the federation key (typically ES256) plus an
-	// optional dedicated RSA key (RS256) to satisfy OIDC Core 1.0 §15.1. Order
-	// matters — node-oidc-provider picks the first matching key when a client's
+	// optional dedicated RSA key (RS256) so the OP can satisfy OpenID Connect
+	// Core's required-to-implement RS256 ID-Token signing. Order matters —
+	// node-oidc-provider picks the first matching key when a client's
 	// `id_token_signed_response_alg` does not narrow the selection.
 	const oidcJwks: JWK[] = oidcSigningKey ? [signingKey, oidcSigningKey] : [signingKey];
 
@@ -175,7 +185,16 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 	});
 
 	const jtiStore = new InMemoryJtiStore();
-	const federationHandler = authority.handler();
+	const leafHandler = createLeafHandler(leaf);
+	const registrationHandler = createExplicitRegistrationHandler({
+		opEntityId: entityId as EntityId,
+		getSigningKey: async () => ({
+			key: signingKey,
+			kid: (signingKey.kid as string) ?? "op-key",
+		}),
+		trustAnchors,
+		options: { httpClient },
+	});
 	const app = express();
 
 	app.use(
@@ -190,39 +209,24 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 	app.use(express.urlencoded({ extended: false, limit: "64kb" }));
 
 	// ── Federation surface ───────────────────────────────────────────────────
+	// Leaf-role OP: only the Entity Configuration endpoint is exposed here.
+	// Authority endpoints (fetch / list / resolve / trust-mark*) are not
+	// mounted because this factory targets the leaf-role case.
 	app.all("/.well-known/openid-federation", async (req, res) => {
 		const url = new URL(req.originalUrl, entityId);
 		const request = new Request(url.toString(), { method: "GET" });
-		const response = await federationHandler(request);
+		const response = await leafHandler(request);
 		res.status(response.status);
 		for (const [key, value] of response.headers) res.setHeader(key, value);
 		res.send(await response.text());
 	});
 
-	// All federation paths except /federation_registration get the simple forwarding.
-	// /federation_registration is intercepted to capture the OP-issued registration response
-	// and register the resulting client with the provider's adapter.
-	const SIMPLE_FEDERATION_PATHS = [
-		"/federation_fetch",
-		"/federation_list",
-		"/federation_resolve",
-		"/federation_trust_mark",
-		"/federation_trust_mark_status",
-		"/federation_trust_mark_list",
-	];
-	for (const path of SIMPLE_FEDERATION_PATHS) {
-		app.all(path, async (req, res) => {
-			const request = await toFetchRequest(req, entityId);
-			const response = await federationHandler(request);
-			res.status(response.status);
-			for (const [key, value] of response.headers) res.setHeader(key, value);
-			res.send(await response.text());
-		});
-	}
-
+	// /federation_registration is the OIDC explicit-registration endpoint —
+	// post-processed to capture the OP-issued registration response and
+	// register the resulting client with the provider's adapter.
 	app.all("/federation_registration", async (req, res) => {
 		const request = await toFetchRequest(req, entityId);
-		const response = await federationHandler(request);
+		const response = await registrationHandler(request);
 
 		// On a 200, decode the explicit-registration response and register the resulting
 		// client. The response shape is fixed: typ=explicit-registration-response+jwt,

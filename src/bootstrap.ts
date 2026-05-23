@@ -8,8 +8,8 @@
  * Six-phase build:
  *   1. Load or generate signing keys, persist snapshot
  *   2. Per topology, derive its TrustAnchorSet from the TA entities
- *   3. Create authorities (TA / Intermediate / OP) and bind them to vhosts
- *   4. Create leaf entities (federation-only RPs) and bind them to vhosts
+ *   3. Create authority-role entities (TA + Intermediate) and bind them to vhosts
+ *   4. Create leaf-role entities (RPs and leaf-role OPs) and bind them to vhosts
  *   5. Register subordinates in each parent's MemorySubordinateStore
  *   6. Register topology aliases (e.g. `single.fed.oidfed.com` → TA)
  *
@@ -24,24 +24,31 @@ import {
 	MemorySubordinateStore,
 	MemoryTrustMarkStore,
 	createAuthorityServer,
+	sanitizeSubordinateMetadata,
 } from "@oidfed/authority";
 import type { EntityType, HttpClient, JWK, TrustAnchorSet } from "@oidfed/core";
 import { entityId, generateSigningKey } from "@oidfed/core";
 import { type LeafEntity, createLeafEntity } from "@oidfed/leaf";
-import { OIDCRegistrationAdapter } from "@oidfed/oidc";
 import { createAuthorityHonoApp } from "./entities/authority.js";
 import { createDemoRpHonoApp } from "./entities/demo-rp.js";
 import { createLeafHonoApp } from "./entities/leaf.js";
 import { createOpExpressApp } from "./entities/op.js";
 
 /**
- * RPs that participate in the visible OIDC demo flow. Other RPs serve only their
- * federation surface (`/.well-known/openid-federation`) — kept narrow per the
- * single-anchor-only constraint on the OIDC layer.
+ * RPs that participate in the visible OIDC demo flow. Single-anchor demonstrates
+ * both registration modes (RP1 automatic, RP2 explicit); every other topology
+ * picks one automatic-registration RP so the dance can be exercised end-to-end.
+ * The constrained topology has no demo RP — that topology exists to exercise
+ * the max_path_length chain-validation failure, not the OIDC flow.
+ * Other RPs serve only their federation surface (`/.well-known/openid-federation`).
  */
 const DEMO_RP_ENTITY_IDS: ReadonlySet<string> = new Set([
 	"https://rp1.single.fed.oidfed.com",
 	"https://rp2.single.fed.oidfed.com",
+	"https://rp1.hier.fed.oidfed.com",
+	"https://rp1.multi.fed.oidfed.com",
+	"https://rp-x.xfed.fed.oidfed.com",
+	"https://rp.policy.fed.oidfed.com",
 ]);
 import { entityIdToHostname, topologyAliases } from "./lib/subdomain.js";
 import {
@@ -138,12 +145,12 @@ export async function bootstrapFederation(
 			taEntities.map((ta) => [entityId(ta.id), { jwks: { keys: [getKeys(ta.id).public] } }]),
 		);
 
-		// 3. Create authority entities (TA, intermediate, OP) for this topology.
+		// 3. Create authority entities (TA + Intermediate) for this topology.
+		//    OPs configured with role: "leaf" are built in step 4 alongside RPs;
+		//    a topology that places an OP in the intermediate or trust-anchor role
+		//    would land here and need its own authority + oidc composition path.
 		for (const entity of topology.entities) {
-			const isAuthority =
-				entity.role === "trust-anchor" ||
-				entity.role === "intermediate" ||
-				entity.protocolRole === "op";
+			const isAuthority = entity.role === "trust-anchor" || entity.role === "intermediate";
 			if (!isAuthority) continue;
 
 			const keys = getKeys(entity.id);
@@ -178,43 +185,21 @@ export async function bootstrapFederation(
 			if (entity.entityConfigurationTtlSeconds !== undefined) {
 				authorityConfig.entityConfigurationTtlSeconds = entity.entityConfigurationTtlSeconds;
 			}
-			// OP-role authorities validate inbound RP metadata against the OIDC schema during
-			// /federation_registration (required for OIDC-profile authorities).
-			if (entity.protocolRole === "op") {
-				authorityConfig.registrationProtocolAdapter = new OIDCRegistrationAdapter();
-			}
 
 			// The dynamically-assembled `Record<string, unknown>` above is structurally
 			// compatible with AuthorityConfig; the cast bridges from the lambda-built
-			// object to the package's nominal type. Same seam used in the upstream
-			// e2e launcher at https://github.com/Dahkenangnon/oidfed/blob/main/tests/e2e/helpers/launcher.ts#L149.
+			// object to the package's nominal type.
 			const authority = createAuthorityServer(authorityConfig as unknown as AuthorityConfig);
 			runtimes.set(entity.id, { server: authority, keys });
 
 			const hostname = entityIdToHostname(entity.id);
-			if (entity.protocolRole === "op") {
-				const expressApp = createOpExpressApp({
-					authority,
-					entityId: entity.id,
-					trustAnchors: topologyTrustAnchors,
-					signingKey: keys.signing,
-					publicSigningKey: keys.public,
-					...(keys.oidcSigning !== undefined && keys.oidcPublic !== undefined
-						? { oidcSigningKey: keys.oidcSigning, oidcPublicSigningKey: keys.oidcPublic }
-						: {}),
-					...(options.httpClient !== undefined ? { httpClient: options.httpClient } : {}),
-				});
-				listeners.set(hostname, expressApp as unknown as RequestListener);
-			} else {
-				const honoApp = createAuthorityHonoApp(authority, entity.id);
-				listeners.set(hostname, getRequestListener(honoApp.fetch));
-			}
+			const honoApp = createAuthorityHonoApp(authority, entity.id);
+			listeners.set(hostname, getRequestListener(honoApp.fetch));
 		}
 
-		// 4. Create leaf RP entities (federation-only) for this topology.
+		// 4. Create leaf entities for this topology — RPs and leaf-role OPs.
 		for (const entity of topology.entities) {
 			if (entity.role !== "leaf") continue;
-			if (entity.protocolRole === "op") continue;
 
 			const keys = getKeys(entity.id);
 			const authorityHints = entity.authorityHints?.map((h) => entityId(h)) ?? [];
@@ -256,9 +241,21 @@ export async function bootstrapFederation(
 
 			const hostname = entityIdToHostname(entity.id);
 
-			// Demo RPs participate in the visible OIDC flow; other RPs serve only the
-			// federation surface via the bare leaf factory.
-			if (entity.protocolRole === "rp" && DEMO_RP_ENTITY_IDS.has(entity.id)) {
+			if (entity.protocolRole === "op") {
+				const expressApp = createOpExpressApp({
+					leaf,
+					entityId: entity.id,
+					trustAnchors: topologyTrustAnchors,
+					signingKey: keys.signing,
+					publicSigningKey: keys.public,
+					...(keys.oidcSigning !== undefined && keys.oidcPublic !== undefined
+						? { oidcSigningKey: keys.oidcSigning, oidcPublicSigningKey: keys.oidcPublic }
+						: {}),
+					...(options.httpClient !== undefined ? { httpClient: options.httpClient } : {}),
+				});
+				listeners.set(hostname, expressApp as unknown as RequestListener);
+			} else if (entity.protocolRole === "rp" && DEMO_RP_ENTITY_IDS.has(entity.id)) {
+				// Demo RPs participate in the visible OIDC flow.
 				const opEntity = topology.entities.find((e) => e.protocolRole === "op");
 				if (!opEntity) {
 					throw new Error(`Demo RP ${entity.id} has no OP in its topology`);
@@ -283,6 +280,7 @@ export async function bootstrapFederation(
 				});
 				listeners.set(hostname, getRequestListener(demoApp.fetch));
 			} else {
+				// Non-demo RPs serve only the federation surface via the bare leaf factory.
 				const honoApp = createLeafHonoApp(leaf, entity.id);
 				listeners.set(hostname, getRequestListener(honoApp.fetch));
 			}
@@ -300,14 +298,21 @@ export async function bootstrapFederation(
 				const parentEntity = topology.entities.find((e) => e.id === parentId);
 				const parentConstraints = parentEntity?.constraints;
 
+				// Strip the subordinate's own operational federation_entity claims —
+				// those belong only in the subordinate's Entity Configuration, not in
+				// the parent's Subordinate Statement.
+				const subordinateMetadata = sanitizeSubordinateMetadata(
+					entity.metadata as Record<string, unknown>,
+				);
+
 				const record: SubordinateRecord = {
 					entityId: entityId(entity.id),
 					jwks: { keys: [keys.public] },
-					metadata: entity.metadata,
+					...(subordinateMetadata !== undefined ? { metadata: subordinateMetadata } : {}),
 					...(entity.metadataPolicy !== undefined ? { metadataPolicy: entity.metadataPolicy } : {}),
 					...(parentConstraints !== undefined ? { constraints: parentConstraints } : {}),
 					entityTypes: getEntityTypes(entity) as EntityType[],
-					isIntermediate: entity.role === "intermediate" || entity.protocolRole === "op",
+					isIntermediate: entity.role === "intermediate",
 					createdAt: Date.now() / 1000,
 					updatedAt: Date.now() / 1000,
 				};

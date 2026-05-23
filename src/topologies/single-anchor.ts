@@ -37,14 +37,12 @@ export const singleAnchorTopology: TopologyDefinition = {
 			protocolRole: "op",
 			authorityHints: [TA],
 			metadata: {
-				federation_entity: {
-					federation_registration_endpoint: `${OP}/federation_registration`,
-				},
 				openid_provider: {
 					issuer: OP,
 					authorization_endpoint: `${OP}/auth`,
 					token_endpoint: `${OP}/token`,
 					pushed_authorization_request_endpoint: `${OP}/request`,
+					federation_registration_endpoint: `${OP}/federation_registration`,
 					jwks_uri: `${OP}/jwks`,
 					response_types_supported: ["code"],
 					subject_types_supported: ["public"],
