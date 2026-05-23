@@ -16,6 +16,15 @@ import type { JWK } from "@oidfed/core";
 export interface EntityKeyPair {
 	signing: JWK;
 	public: JWK;
+	/**
+	 * Optional secondary OIDC-only signing key (RSA, alg RS256). Minted for OP
+	 * entities so the OP can sign ID Tokens with RS256 per OIDC Core 1.0 §15.1.
+	 * Federation Entity Statements continue to use the primary `signing` key.
+	 * Absent on non-OP entities and on snapshots written before RS256 support.
+	 */
+	oidcSigning?: JWK;
+	/** Public half of `oidcSigning`. */
+	oidcPublic?: JWK;
 }
 
 export interface KeySnapshot {

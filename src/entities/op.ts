@@ -18,14 +18,25 @@ export interface OpExpressAppConfig {
 	entityId: string;
 	trustAnchors: TrustAnchorSet;
 	/**
-	 * OP's private signing key. Reused for OIDC ID-token signing — single-key model is fine
-	 * for the demo. Production deployments SHOULD split federation + OIDC signing keys.
+	 * OP's private federation signing key (typically ES256). Used to sign Entity
+	 * Statements, Subordinate Statements, and — when no dedicated `oidcSigningKey`
+	 * is supplied — also OIDC ID Tokens.
 	 */
 	signingKey: JWK;
 	/**
-	 * Public form of the signing key, advertised in `jwks`.
+	 * Public form of `signingKey`, advertised in the federation `jwks`.
 	 */
 	publicSigningKey: JWK;
+	/**
+	 * Optional dedicated OIDC ID-Token signing key (typically RSA / RS256). When
+	 * supplied, it is added to the `node-oidc-provider` JWKS alongside the
+	 * federation key, so the OP can sign ID Tokens with RS256 per OIDC Core §15.1
+	 * while keeping ES256 available. Federation Entity Statements continue to use
+	 * `signingKey`. Absent → the federation key alone backs the OIDC layer.
+	 */
+	oidcSigningKey?: JWK;
+	/** Public half of `oidcSigningKey`. */
+	oidcPublicSigningKey?: JWK;
 	/**
 	 * Outbound HTTP client for the OP's federation lookups (resolving the RP's
 	 * trust chain during `processAutomaticRegistration`). Defaults to the global
@@ -72,8 +83,15 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 		trustAnchors,
 		signingKey,
 		publicSigningKey,
+		oidcSigningKey,
 		httpClient = fetch,
 	} = config;
+
+	// OIDC ID-Token signing JWKS: the federation key (typically ES256) plus an
+	// optional dedicated RSA key (RS256) to satisfy OIDC Core 1.0 §15.1. Order
+	// matters — node-oidc-provider picks the first matching key when a client's
+	// `id_token_signed_response_alg` does not narrow the selection.
+	const oidcJwks: JWK[] = oidcSigningKey ? [signingKey, oidcSigningKey] : [signingKey];
 
 	// In-memory storage for the federation-registered clients (and the OIDC state node-oidc-provider
 	// needs for sessions, grants, codes, tokens). Lives for the OP process lifetime.
@@ -82,7 +100,7 @@ export function createOpExpressApp(config: OpExpressAppConfig): Express {
 
 	const oidc = new Provider(entityId, {
 		adapter: Adapter,
-		jwks: { keys: [signingKey] },
+		jwks: { keys: oidcJwks },
 		claims: {
 			openid: ["sub"],
 			profile: ["name", "preferred_username"],

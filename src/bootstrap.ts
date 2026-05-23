@@ -89,9 +89,30 @@ export async function bootstrapFederation(
 
 	const allEntities: EntityDefinition[] = topologies.flatMap((t) => t.entities);
 	for (const e of allEntities) {
-		if (!allKeys.has(e.id)) {
+		const existing = allKeys.get(e.id);
+		if (!existing) {
 			const key = await generateSigningKey("ES256");
-			allKeys.set(e.id, { signing: key.privateKey as JWK, public: key.publicKey as JWK });
+			const entry: EntityKeyPair = {
+				signing: key.privateKey as JWK,
+				public: key.publicKey as JWK,
+			};
+			// OPs additionally need an RSA/RS256 key for OIDC Core ID-token signing.
+			if (e.protocolRole === "op") {
+				const rs = await generateSigningKey("RS256");
+				entry.oidcSigning = rs.privateKey as JWK;
+				entry.oidcPublic = rs.publicKey as JWK;
+			}
+			allKeys.set(e.id, entry);
+			mintedNew = true;
+		} else if (e.protocolRole === "op" && !existing.oidcSigning) {
+			// Snapshot predates RS256 support — backfill an OIDC RSA key without
+			// rotating the entity's federation signing key.
+			const rs = await generateSigningKey("RS256");
+			allKeys.set(e.id, {
+				...existing,
+				oidcSigning: rs.privateKey as JWK,
+				oidcPublic: rs.publicKey as JWK,
+			});
 			mintedNew = true;
 		}
 	}
@@ -178,6 +199,9 @@ export async function bootstrapFederation(
 					trustAnchors: topologyTrustAnchors,
 					signingKey: keys.signing,
 					publicSigningKey: keys.public,
+					...(keys.oidcSigning !== undefined && keys.oidcPublic !== undefined
+						? { oidcSigningKey: keys.oidcSigning, oidcPublicSigningKey: keys.oidcPublic }
+						: {}),
 					...(options.httpClient !== undefined ? { httpClient: options.httpClient } : {}),
 				});
 				listeners.set(hostname, expressApp as unknown as RequestListener);

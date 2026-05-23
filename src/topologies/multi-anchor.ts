@@ -66,7 +66,7 @@ export const multiAnchorTopology: TopologyDefinition = {
 					token_endpoint: `${OP}/token`,
 					response_types_supported: ["code"],
 					subject_types_supported: ["public"],
-					id_token_signing_alg_values_supported: ["ES256"],
+					id_token_signing_alg_values_supported: ["ES256", "RS256"],
 					client_registration_types_supported: ["automatic", "explicit"],
 				},
 			},
